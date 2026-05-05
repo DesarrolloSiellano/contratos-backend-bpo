@@ -9,14 +9,14 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from '../core/guards/jwt-auth.guard';
 import { ObjectiveService } from './objective.service';
 import { CreateObjectiveDto } from './dto/create-objective.dto';
 import { UpdateObjectiveDto } from './dto/update-objective.dto';
 
 @ApiTags('objetivos')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 @Controller('objective')
 export class ObjectiveController {
     constructor(private readonly objectiveService: ObjectiveService) {}

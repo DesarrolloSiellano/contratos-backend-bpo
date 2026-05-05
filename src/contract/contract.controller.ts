@@ -9,17 +9,17 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { ContractService } from './contract.service';
+import { JwtAuthGuard } from '../core/guards/jwt-auth.guard';
 import { CreateContractDto } from './dto/create-contract.dto';
 import { UpdateContractDto } from './dto/update-contract.dto';
 
 @ApiTags('contratos')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 @Controller('contract')
 export class ContractController {
-    constructor(private readonly contractService: ContractService) {}
+    constructor(private readonly contractService: ContractService) { }
 
     @Post()
     @ApiOperation({ summary: 'Crear un nuevo contrato' })

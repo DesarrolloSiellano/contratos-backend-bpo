@@ -17,9 +17,9 @@ import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { extname } from 'path';
 import { SupportService } from './support.service';
+import { JwtAuthGuard } from '../core/guards/jwt-auth.guard';
 import { CreateSupportDto } from './dto/create-support.dto';
 import { UpdateSupportDto } from './dto/update-support.dto';
-import { AuthGuard } from '@nestjs/passport';
 import type { Response } from 'express';
 
 @ApiTags('soportes')
@@ -29,7 +29,7 @@ export class SupportController {
     constructor(private readonly supportService: SupportService) {}
 
     @Post('upload')
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(JwtAuthGuard)
     @UseInterceptors(
         FileInterceptor('file', {
             storage: diskStorage({
@@ -52,7 +52,7 @@ export class SupportController {
     }
 
     @Get()
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(JwtAuthGuard)
     findAll() {
         return this.supportService.findAll();
     }
@@ -65,20 +65,20 @@ export class SupportController {
     }
 
     @Get(':id')
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(JwtAuthGuard)
     findOne(@Param('id') id: string) {
         return this.supportService.findOne(id);
     }
 
     @Patch(':id')
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(JwtAuthGuard)
     @ApiOperation({ summary: 'Actualizar estado de revisión de un soporte' })
     update(@Param('id') id: string, @Body() updateDto: UpdateSupportDto) {
         return this.supportService.update(id, updateDto);
     }
 
     @Delete(':id')
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(JwtAuthGuard)
     remove(@Param('id') id: string) {
         return this.supportService.remove(id);
     }
