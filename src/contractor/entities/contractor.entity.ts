@@ -1,10 +1,9 @@
-import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    CreateDateColumn,
-    UpdateDateColumn,
-} from 'typeorm';
+import { OneToMany, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Entity } from 'typeorm';
+import { ContractorChecklist } from '../../contractor-checklist/entities/contractor-checklist.entity';
+import { Contract } from '../../contract/entities/contract.entity';
+import { Evaluation } from '../../evaluation/entities/evaluation.entity';
+import { Period } from '../../period/entities/period.entity';
+import { Support } from '../../support/entities/support.entity';
 
 @Entity('contratistas')
 export class Contratista {
@@ -80,4 +79,19 @@ export class Contratista {
         name: 'contrato_vigente',
     })
     contratoVigente: boolean;
+
+    @OneToMany(() => ContractorChecklist, (checklist) => checklist.contratista)
+    listasChequeo: ContractorChecklist[];
+
+    @OneToMany(() => Contract, (contract) => contract.contratista)
+    contratos: Contract[];
+
+    @OneToMany(() => Evaluation, (evaluation) => evaluation.contratista)
+    evaluaciones: Evaluation[];
+
+    @OneToMany(() => Period, (period) => period.contratista)
+    periodos: Period[];
+
+    @OneToMany(() => Support, (support) => support.contratista)
+    soportes: Support[];
 }

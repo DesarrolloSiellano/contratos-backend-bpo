@@ -1,19 +1,18 @@
-import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    ManyToOne,
-    JoinColumn,
-} from 'typeorm';
-
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Contract } from '../../contract/entities/contract.entity';
+import { Support } from '../../support/entities/support.entity';
 
 @Entity('tareas')
 export class Tarea {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({ type: 'varchar', length: 100, nullable: true })
-    numeroContrato: string;
+    @ManyToOne(() => Contract, (contract) => contract.tareas)
+    @JoinColumn({ name: 'contrato_id' })
+    contrato: Contract;
+
+    @Column({ name: 'contrato_id', nullable: true })
+    contratoId: string;
 
     @Column({ type: 'varchar', length: 150, nullable: true })
     nombreReferente: string;
@@ -77,4 +76,7 @@ export class Tarea {
 
     @Column({ type: 'varchar', length: 20, nullable: true })
     porcentajeAvanceNoAlcanzadoAcumulado: string;
+
+    @OneToMany(() => Support, (support) => support.tarea)
+    soportes: Support[];
 }
