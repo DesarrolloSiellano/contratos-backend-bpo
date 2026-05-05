@@ -8,6 +8,9 @@ import {
 } from 'class-validator';
 
 export class CreateSupportDto {
+    @ApiProperty({ type: 'string', format: 'binary', description: 'Archivo físico a subir' })
+    file: any;
+
     @ApiPropertyOptional({ description: 'Descripción o nota sobre el soporte' })
     @IsString()
     @IsOptional()

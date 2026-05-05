@@ -67,4 +67,9 @@ export class CreateEvaluationDto {
     @IsNumber()
     @IsNotEmpty()
     contratistaId: number;
+
+    @ApiPropertyOptional({ description: 'ID del periodo asociado (UUID)' })
+    @IsString()
+    @IsOptional()
+    periodoId?: string;
 }

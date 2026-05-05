@@ -9,14 +9,14 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from '../core/guards/jwt-auth.guard';
 import { ContractorChecklistService } from './contractor-checklist.service';
 import { CreateContractorChecklistDto } from './dto/create-contractor-checklist.dto';
 import { UpdateContractorChecklistDto } from './dto/update-contractor-checklist.dto';
 
 @ApiTags('listas-chequeo-contratistas')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 @Controller('contractor-checklist')
 export class ContractorChecklistController {
     constructor(private readonly checklistService: ContractorChecklistService) {}
