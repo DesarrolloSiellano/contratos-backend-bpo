@@ -1,10 +1,10 @@
 # Arquitectura y Documentación Técnica - Sistema BPO Backend
 
-Este documento describe la estructura, flujos y el modelo de datos del backend para la gestión de contratistas y contratos.
+Este sistema es el núcleo de gestión para contratistas, contratos y evidencias del ecosistema BPO. Está diseñado bajo una arquitectura de microservicios (en este caso el módulo de contratos) que se integra con un sistema de autenticación centralizado.
 
 ## 1. Modelo de Datos Relacional (ERD)
 
-El sistema utiliza PostgreSQL como base de datos relacional para garantizar la integridad y trazabilidad de la información contractual.
+El sistema utiliza **PostgreSQL** para garantizar la integridad referencial y permitir consultas complejas sobre el ciclo de vida del contrato.
 
 ```mermaid
 erDiagram
@@ -57,11 +57,11 @@ erDiagram
 
 ## 2. Estructura de Módulos
 
-La aplicación sigue una arquitectura modular en NestJS, donde cada recurso es independiente pero está interconectado mediante relaciones de TypeORM.
+La aplicación sigue una arquitectura modular en NestJS, facilitando la escalabilidad y el mantenimiento independiente de cada recurso.
 
 ```mermaid
 graph TD
-    App[AppModule] --> Core[Core: Database, Auth]
+    App[AppModule] --> Core[Core: Database, Auth, Guards]
     App --> Contractor[ContractorModule]
     App --> Checklist[ContractorChecklistModule]
     App --> Contract[ContractModule]
@@ -78,22 +78,65 @@ graph TD
     Support -.-> AllEntities[Todas las Entidades]
 ```
 
-## 3. Flujo de Gestión Documental (Soportes)
+## 3. Seguridad y Autenticación
 
-1.  **Carga:** Los archivos se suben vía `POST /support/upload` asociándolos a un `contratistaId` y opcionalmente a otras entidades (`contratoId`, `tareaId`, etc.).
-2.  **Almacenamiento:** El archivo físico se guarda en `./uploads/supports/` con un nombre único (UUID).
-3.  **Trazabilidad:** La base de datos guarda la metadata y la URL de acceso.
-4.  **Aprobación:** Los supervisores pueden marcar los soportes como `revisado` o `rechazado`.
+El sistema implementa un esquema de seguridad basado en **JWT (JSON Web Tokens)**:
+- **JwtAuthGuard Personalizado:** Ubicado en `src/core/guards/jwt-auth.guard.ts`. Maneja la validación de tokens y lanza excepciones específicas como `SESSION_EXPIRED`.
+- **Registro de Auditoría:** Cada intento de acceso (exitoso o fallido) se registra mediante el sistema de logs, incluyendo el ID del usuario y el error detectado.
+- **Protección Global:** Todos los controladores de recursos requieren un token válido en el header `Authorization: Bearer <token>`.
 
-## 4. Observabilidad y Logs
+## 4. Gestión Documental (Soportes)
 
-El sistema utiliza `nestjs-pino` para el registro de eventos:
-- **Consola:** Formato amigable mediante `pino-pretty`.
-- **Archivos:** Rotación diaria en la carpeta `/logs` mediante `pino-roll`.
-- **Nivel:** Configurado globalmente para capturar errores, advertencias e información relevante de las peticiones.
+El módulo de Soportes es polimórfico y permite adjuntar evidencias a múltiples niveles:
+- **Almacenamiento:** Los archivos físicos se almacenan localmente en la carpeta raíz `/uploads/supports`.
+- **Nomenclatura:** Se utiliza UUID para renombrar los archivos y evitar duplicados o sobreescritura.
+- **Metadata:** Se almacena el `mimetype`, `size` y `originalName` para permitir descargas precisas.
+- **Revisión:** Flujo integrado de `revisado` / `rechazado` para el control de calidad de las evidencias.
 
-## 5. Documentación de API (Swagger)
+## 5. Observabilidad y Logs
 
-La documentación interactiva está disponible en:
-- `http://localhost:3000/docs` (o el puerto configurado).
-- Incluye esquemas de validación (DTOs) y ejemplos de respuestas.
+Implementado con `nestjs-pino`:
+- **Formatos:** JSON en archivos para procesamiento automático y texto legible en consola para desarrollo.
+- **Rotación:** Los logs se rotan diariamente y se almacenan en la carpeta `/logs`.
+- **Trazabilidad:** Cada petición HTTP incluye un ID único de log para seguir el flujo de una operación de principio a fin.
+
+## 6. Stack Tecnológico y Librerías
+
+### Core
+- **Framework:** [NestJS](https://nestjs.com/) v10 (Node.js)
+- **Lenguaje:** TypeScript
+- **Base de Datos:** PostgreSQL
+- **ORM:** TypeORM
+
+### Librerías Principales
+- **`@nestjs/swagger`:** Generación automática de documentación OpenAPI.
+- **`@nestjs/typeorm` & `pg`:** Integración y driver para PostgreSQL.
+- **`class-validator` & `class-transformer`:** Validación y transformación de DTOs.
+- **`nestjs-pino` & `pino-pretty`:** Sistema de logging de alto rendimiento.
+- **`multer`:** Middleware para el manejo de `multipart/form-data` (subida de archivos).
+- **`uuid`:** Generación de identificadores únicos para archivos y entidades.
+- **`passport-jwt`:** Estrategia de autenticación mediante tokens.
+
+## 7. Configuración de Entorno (`.env`)
+
+Para ejecutar el proyecto, asegúrese de tener configuradas las siguientes variables en su archivo `.env` o `.env.local`:
+
+```bash
+# Servidor
+PORT=3000
+NODE_ENV=development
+
+# Base de Datos PostgreSQL
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=tu_contrasena
+DB_NAME=contratos_db
+
+# Configuración de JWT (Debe coincidir con auth-ms)
+JWT_SECRET=tu_secreto_super_seguro
+JWT_EXPIRES_IN=24h
+
+# Rutas de Archivos
+UPLOAD_LOCATION=./uploads/supports
+```
