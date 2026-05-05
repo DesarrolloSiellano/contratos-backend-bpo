@@ -8,10 +8,10 @@ import {
 } from 'class-validator';
 
 export class CreateTaskDto {
-    @ApiPropertyOptional({ description: 'Número del contrato', example: 'CON-001' })
+    @ApiPropertyOptional({ description: 'ID del contrato asociado (UUID)', example: 'uuid-del-contrato' })
     @IsString()
     @IsOptional()
-    numeroContrato?: string;
+    contratoId?: string;
 
     @ApiPropertyOptional({ description: 'Nombre del referente', example: 'Juan Pérez' })
     @IsString()

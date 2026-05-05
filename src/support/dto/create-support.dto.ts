@@ -1,0 +1,50 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+    IsString,
+    IsOptional,
+    IsBoolean,
+    IsNotEmpty,
+    IsNumber,
+} from 'class-validator';
+
+export class CreateSupportDto {
+    @ApiPropertyOptional({ description: 'Descripción o nota sobre el soporte' })
+    @IsString()
+    @IsOptional()
+    descripcion?: string;
+
+    @ApiPropertyOptional({ description: 'Porcentaje de peso o relevancia' })
+    @IsString()
+    @IsOptional()
+    porcentajePeso?: string;
+
+    @ApiPropertyOptional({ description: 'Responsable' })
+    @IsString()
+    @IsOptional()
+    responsable?: string;
+
+    @ApiProperty({ description: 'ID del contratista (propietario)', example: 1 })
+    @IsNumber()
+    @IsNotEmpty()
+    contratistaId: number;
+
+    @ApiPropertyOptional({ description: 'ID del contrato asociado' })
+    @IsString()
+    @IsOptional()
+    contratoId?: string;
+
+    @ApiPropertyOptional({ description: 'ID de la tarea asociada' })
+    @IsString()
+    @IsOptional()
+    tareaId?: string;
+
+    @ApiPropertyOptional({ description: 'ID del periodo asociado' })
+    @IsString()
+    @IsOptional()
+    periodoId?: string;
+
+    @ApiPropertyOptional({ description: 'ID del objetivo asociado' })
+    @IsString()
+    @IsOptional()
+    objetivoId?: string;
+}
