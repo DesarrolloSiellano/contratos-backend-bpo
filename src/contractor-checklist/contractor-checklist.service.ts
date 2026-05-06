@@ -12,36 +12,61 @@ export class ContractorChecklistService {
         private readonly checklistRepository: Repository<ContractorChecklist>,
     ) {}
 
-    async create(createDto: CreateContractorChecklistDto): Promise<ContractorChecklist> {
+    async create(createDto: CreateContractorChecklistDto) {
         const checklist = this.checklistRepository.create(createDto);
-        return await this.checklistRepository.save(checklist);
+        const saved = await this.checklistRepository.save(checklist);
+        return {
+            message: 'Checklist created successfully',
+            data: saved,
+        };
     }
 
-    async findAll(): Promise<ContractorChecklist[]> {
-        return await this.checklistRepository.find({
+    async findAll() {
+        const data = await this.checklistRepository.find({
             relations: ['contratista'],
         });
+        return {
+            message: 'Checklists found',
+            data,
+            meta: { totalData: data.length },
+        };
     }
 
-    async findOne(id: string): Promise<ContractorChecklist> {
+    async findOne(id: string) {
         const checklist = await this.checklistRepository.findOne({
             where: { id },
             relations: ['contratista'],
         });
         if (!checklist) {
-            throw new NotFoundException(`Lista de chequeo con ID ${id} no encontrada`);
+            throw new NotFoundException(`Checklist with ID ${id} not found`);
         }
-        return checklist;
+        return {
+            message: 'Checklist found',
+            data: checklist,
+        };
     }
 
-    async update(id: string, updateDto: UpdateContractorChecklistDto): Promise<ContractorChecklist> {
-        const checklist = await this.findOne(id);
-        const updated = Object.assign(checklist, updateDto);
-        return await this.checklistRepository.save(updated);
+    async update(id: string, updateDto: UpdateContractorChecklistDto) {
+        const checklist = await this.checklistRepository.preload({
+            id,
+            ...updateDto,
+        });
+        if (!checklist) {
+            throw new NotFoundException(`Checklist with ID ${id} not found`);
+        }
+        const updated = await this.checklistRepository.save(checklist);
+        return {
+            message: 'Checklist updated successfully',
+            data: updated,
+        };
     }
 
-    async remove(id: string): Promise<void> {
+    async remove(id: string) {
         const checklist = await this.findOne(id);
-        await this.checklistRepository.remove(checklist);
+        await this.checklistRepository.remove(checklist.data);
+        return {
+            message: 'Checklist deleted successfully',
+            data: null,
+        };
     }
 }

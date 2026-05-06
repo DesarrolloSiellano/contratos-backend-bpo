@@ -5,6 +5,8 @@ import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 import { ensureDatabaseExists } from './core/database/database-utils';
+import { ResponseInterceptor } from './core/interceptors/response.interceptor';
+import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 
 async function bootstrap() {
   // Asegurar que la base de datos existe antes de que TypeORM intente conectarse
@@ -49,6 +51,9 @@ async function bootstrap() {
     forbidNonWhitelisted: true,
     transform: true,
   }));
+
+  app.useGlobalInterceptors(new ResponseInterceptor());
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   await app.listen(process.env.PORT ?? 3000);
 }

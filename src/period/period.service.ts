@@ -12,44 +12,74 @@ export class PeriodService {
         private readonly periodRepository: Repository<Period>,
     ) {}
 
-    async create(createDto: CreatePeriodDto): Promise<Period> {
+    async create(createDto: CreatePeriodDto) {
         const period = this.periodRepository.create(createDto);
-        return await this.periodRepository.save(period);
+        const saved = await this.periodRepository.save(period);
+        return {
+            message: 'Period created successfully',
+            data: saved,
+        };
     }
 
-    async findAll(): Promise<Period[]> {
-        return await this.periodRepository.find({
-            relations: ['contrato', 'contratista', 'evaluation'],
+    async findAll() {
+        const data = await this.periodRepository.find({
+            relations: ['contrato', 'contratista', 'evaluation', 'soportes'],
         });
+        return {
+            message: 'Periods found',
+            data,
+            meta: { totalData: data.length },
+        };
     }
 
-    async findByContract(contratoId: string): Promise<Period[]> {
-        return await this.periodRepository.find({
+    async findByContract(contratoId: string) {
+        const data = await this.periodRepository.find({
             where: { contratoId },
-            relations: ['evaluation'],
+            relations: ['evaluation', 'soportes'],
             order: { numeroPeriodo: 'ASC' },
         });
+        return {
+            message: 'Periods found for contract',
+            data,
+            meta: { totalData: data.length },
+        };
     }
 
-    async findOne(id: string): Promise<Period> {
+    async findOne(id: string) {
         const period = await this.periodRepository.findOne({
             where: { id },
-            relations: ['contrato', 'contratista', 'evaluation'],
+            relations: ['contrato', 'contratista', 'evaluation', 'soportes'],
         });
         if (!period) {
-            throw new NotFoundException(`Periodo con ID ${id} no encontrado`);
+            throw new NotFoundException(`Period with ID ${id} not found`);
         }
-        return period;
+        return {
+            message: 'Period found',
+            data: period,
+        };
     }
 
-    async update(id: string, updateDto: UpdatePeriodDto): Promise<Period> {
-        const period = await this.findOne(id);
-        const updated = Object.assign(period, updateDto);
-        return await this.periodRepository.save(updated);
+    async update(id: string, updateDto: UpdatePeriodDto) {
+        const period = await this.periodRepository.preload({
+            id,
+            ...updateDto,
+        });
+        if (!period) {
+            throw new NotFoundException(`Period with ID ${id} not found`);
+        }
+        const updated = await this.periodRepository.save(period);
+        return {
+            message: 'Period updated successfully',
+            data: updated,
+        };
     }
 
-    async remove(id: string): Promise<void> {
+    async remove(id: string) {
         const period = await this.findOne(id);
-        await this.periodRepository.remove(period);
+        await this.periodRepository.remove(period.data);
+        return {
+            message: 'Period deleted successfully',
+            data: null,
+        };
     }
 }

@@ -20,9 +20,9 @@ export class SupportService {
         }
     }
 
-    async uploadFile(file: Express.Multer.File, createDto: CreateSupportDto): Promise<Support> {
+    async uploadFile(file: Express.Multer.File, createDto: CreateSupportDto) {
         if (!file) {
-            throw new BadRequestException('No se ha proporcionado ningún archivo');
+            throw new BadRequestException('No file provided');
         }
 
         const support = this.supportRepository.create({
@@ -36,42 +36,70 @@ export class SupportService {
             url: `/api/support/download/${file.filename}`,
         });
 
-        return await this.supportRepository.save(support);
+        const saved = await this.supportRepository.save(support);
+        return {
+            message: 'File uploaded successfully',
+            data: saved,
+        };
     }
 
-    async findAll(): Promise<Support[]> {
-        return await this.supportRepository.find();
+    async findAll() {
+        const data = await this.supportRepository.find();
+        return {
+            message: 'Supports found',
+            data,
+            meta: { totalData: data.length },
+        };
     }
 
-    async findOne(id: string): Promise<Support> {
-        const support = await this.supportRepository.findOneBy({ id });
+    async findOne(id: string) {
+        const support = await this.supportRepository.findOne({
+            where: { id },
+            relations: ['contrato', 'tarea', 'periodo', 'contratista', 'objetivo'],
+        });
         if (!support) {
-            throw new NotFoundException(`Soporte con ID ${id} no encontrado`);
+            throw new NotFoundException(`Support with ID ${id} not found`);
         }
-        return support;
+        return {
+            message: 'Support found',
+            data: support,
+        };
     }
 
-    async update(id: string, updateDto: UpdateSupportDto): Promise<Support> {
-        const support = await this.findOne(id);
-        Object.assign(support, updateDto);
-        return await this.supportRepository.save(support);
+    async update(id: string, updateDto: UpdateSupportDto) {
+        const support = await this.supportRepository.preload({
+            id,
+            ...updateDto,
+        });
+        if (!support) {
+            throw new NotFoundException(`Support with ID ${id} not found`);
+        }
+        const updated = await this.supportRepository.save(support);
+        return {
+            message: 'Support updated successfully',
+            data: updated,
+        };
     }
 
-    async remove(id: string): Promise<void> {
+    async remove(id: string) {
         const support = await this.findOne(id);
         
         // Eliminar archivo físico
-        if (fs.existsSync(support.path)) {
-            fs.unlinkSync(support.path);
+        if (fs.existsSync(support.data.path)) {
+            fs.unlinkSync(support.data.path);
         }
 
-        await this.supportRepository.remove(support);
+        await this.supportRepository.remove(support.data);
+        return {
+            message: 'Support deleted successfully',
+            data: null,
+        };
     }
 
     getFilePath(filename: string): string {
         const filePath = path.join(process.cwd(), 'uploads/supports', filename);
         if (!fs.existsSync(filePath)) {
-            throw new NotFoundException('Archivo no encontrado en el servidor');
+            throw new NotFoundException('File not found on server');
         }
         return filePath;
     }

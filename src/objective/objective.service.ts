@@ -12,42 +12,73 @@ export class ObjectiveService {
         private readonly objectiveRepository: Repository<Objective>,
     ) {}
 
-    async create(createDto: CreateObjectiveDto): Promise<Objective> {
+    async create(createDto: CreateObjectiveDto) {
         const objective = this.objectiveRepository.create(createDto);
-        return await this.objectiveRepository.save(objective);
+        const saved = await this.objectiveRepository.save(objective);
+        return {
+            message: 'Objective created successfully',
+            data: saved,
+        };
     }
 
-    async findAll(): Promise<Objective[]> {
-        return await this.objectiveRepository.find({
-            relations: ['contrato'],
+    async findAll() {
+        const data = await this.objectiveRepository.find({
+            relations: ['contrato', 'soportes'],
         });
+        return {
+            message: 'Objectives found',
+            data,
+            meta: { totalData: data.length },
+        };
     }
 
-    async findByContract(contratoId: string): Promise<Objective[]> {
-        return await this.objectiveRepository.find({
+    async findByContract(contratoId: string) {
+        const data = await this.objectiveRepository.find({
             where: { contratoId },
+            relations: ['soportes'],
         });
+        return {
+            message: 'Objectives found for contract',
+            data,
+            meta: { totalData: data.length },
+        };
     }
 
-    async findOne(id: string): Promise<Objective> {
+    async findOne(id: string) {
         const objective = await this.objectiveRepository.findOne({
             where: { id },
-            relations: ['contrato'],
+            relations: ['contrato', 'soportes'],
         });
         if (!objective) {
-            throw new NotFoundException(`Objetivo con ID ${id} no encontrado`);
+            throw new NotFoundException(`Objective with ID ${id} not found`);
         }
-        return objective;
+        return {
+            message: 'Objective found',
+            data: objective,
+        };
     }
 
-    async update(id: string, updateDto: UpdateObjectiveDto): Promise<Objective> {
-        const objective = await this.findOne(id);
-        const updated = Object.assign(objective, updateDto);
-        return await this.objectiveRepository.save(updated);
+    async update(id: string, updateDto: UpdateObjectiveDto) {
+        const objective = await this.objectiveRepository.preload({
+            id,
+            ...updateDto,
+        });
+        if (!objective) {
+            throw new NotFoundException(`Objective with ID ${id} not found`);
+        }
+        const updated = await this.objectiveRepository.save(objective);
+        return {
+            message: 'Objective updated successfully',
+            data: updated,
+        };
     }
 
-    async remove(id: string): Promise<void> {
+    async remove(id: string) {
         const objective = await this.findOne(id);
-        await this.objectiveRepository.remove(objective);
+        await this.objectiveRepository.remove(objective.data);
+        return {
+            message: 'Objective deleted successfully',
+            data: null,
+        };
     }
 }

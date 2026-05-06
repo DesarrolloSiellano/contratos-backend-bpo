@@ -12,31 +12,61 @@ export class TaskService {
     private readonly tareaRepository: Repository<Tarea>,
   ) {}
 
-  async create(createTaskDto: CreateTaskDto): Promise<Tarea> {
+  async create(createTaskDto: CreateTaskDto) {
     const nuevaTarea = this.tareaRepository.create(createTaskDto);
-    return await this.tareaRepository.save(nuevaTarea);
+    const saved = await this.tareaRepository.save(nuevaTarea);
+    return {
+      message: 'Task created successfully',
+      data: saved,
+    };
   }
 
-  async findAll(): Promise<Tarea[]> {
-    return await this.tareaRepository.find();
+  async findAll() {
+    const data = await this.tareaRepository.find({
+      relations: ['contrato', 'soportes'],
+    });
+    return {
+      message: 'Tasks found',
+      data,
+      meta: { totalData: data.length },
+    };
   }
 
-  async findOne(id: string): Promise<Tarea> {
-    const tarea = await this.tareaRepository.findOneBy({ id });
+  async findOne(id: string) {
+    const tarea = await this.tareaRepository.findOne({
+      where: { id },
+      relations: ['contrato', 'soportes'],
+    });
     if (!tarea) {
-      throw new NotFoundException(`Tarea con ID ${id} no encontrada`);
+      throw new NotFoundException(`Task with ID ${id} not found`);
     }
-    return tarea;
+    return {
+      message: 'Task found',
+      data: tarea,
+    };
   }
 
-  async update(id: string, updateTaskDto: UpdateTaskDto): Promise<Tarea> {
-    const tarea = await this.findOne(id);
-    const tareaActualizada = this.tareaRepository.merge(tarea, updateTaskDto);
-    return await this.tareaRepository.save(tareaActualizada);
+  async update(id: string, updateTaskDto: UpdateTaskDto) {
+    const tarea = await this.tareaRepository.preload({
+      id,
+      ...updateTaskDto,
+    });
+    if (!tarea) {
+      throw new NotFoundException(`Task with ID ${id} not found`);
+    }
+    const updated = await this.tareaRepository.save(tarea);
+    return {
+      message: 'Task updated successfully',
+      data: updated,
+    };
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string) {
     const tarea = await this.findOne(id);
-    await this.tareaRepository.remove(tarea);
+    await this.tareaRepository.remove(tarea.data);
+    return {
+      message: 'Task deleted successfully',
+      data: null,
+    };
   }
 }

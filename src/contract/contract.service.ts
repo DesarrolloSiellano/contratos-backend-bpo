@@ -12,47 +12,75 @@ export class ContractService {
         private readonly contractRepository: Repository<Contract>,
     ) {}
 
-    async create(createDto: CreateContractDto): Promise<Contract> {
+    async create(createDto: CreateContractDto) {
         const contract = this.contractRepository.create(createDto);
-        return await this.contractRepository.save(contract);
+        const saved = await this.contractRepository.save(contract);
+        return {
+            message: 'Contract created successfully',
+            data: saved,
+        };
     }
 
-    async findAll(): Promise<Contract[]> {
-        return await this.contractRepository.find({
-            relations: ['contratista', 'tareas'],
+    async findAll() {
+        const data = await this.contractRepository.find({
+            relations: ['contratista', 'tareas', 'periodos', 'objetivos', 'soportes'],
         });
+        return {
+            message: 'Contracts found',
+            data,
+            meta: { totalData: data.length },
+        };
     }
 
-    async findOne(id: string): Promise<Contract> {
+    async findOne(id: string) {
         const contract = await this.contractRepository.findOne({
             where: { id },
-            relations: ['contratista', 'tareas'],
+            relations: ['contratista', 'tareas', 'periodos', 'objetivos', 'soportes'],
         });
         if (!contract) {
-            throw new NotFoundException(`Contrato con ID ${id} no encontrado`);
+            throw new NotFoundException(`Contract with ID ${id} not found`);
         }
-        return contract;
+        return {
+            message: 'Contract found',
+            data: contract,
+        };
     }
 
-    async findByNumber(numeroContrato: string): Promise<Contract> {
+    async findByNumber(numeroContrato: string) {
         const contract = await this.contractRepository.findOne({
             where: { numeroContrato },
-            relations: ['contratista', 'tareas'],
+            relations: ['contratista', 'tareas', 'periodos', 'objetivos', 'soportes'],
         });
         if (!contract) {
-            throw new NotFoundException(`Contrato número ${numeroContrato} no encontrado`);
+            throw new NotFoundException(`Contract number ${numeroContrato} not found`);
         }
-        return contract;
+        return {
+            message: 'Contract found',
+            data: contract,
+        };
     }
 
-    async update(id: string, updateDto: UpdateContractDto): Promise<Contract> {
-        const contract = await this.findOne(id);
-        const updated = Object.assign(contract, updateDto);
-        return await this.contractRepository.save(updated);
+    async update(id: string, updateDto: UpdateContractDto) {
+        const contract = await this.contractRepository.preload({
+            id,
+            ...updateDto,
+        });
+        if (!contract) {
+            throw new NotFoundException(`Contract with ID ${id} not found`);
+        }
+        const updated = await this.contractRepository.save(contract);
+        return {
+            message: 'Contract updated successfully',
+            data: updated,
+        };
     }
 
-    async remove(id: string): Promise<void> {
+    async remove(id: string) {
         const contract = await this.findOne(id);
-        await this.contractRepository.remove(contract);
+        await this.contractRepository.remove(contract.data);
+        return {
+            message: 'Contract deleted successfully',
+            data: null,
+        };
     }
 }
