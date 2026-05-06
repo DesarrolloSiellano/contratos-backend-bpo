@@ -28,8 +28,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
         ? exception.getResponse()
         : exception.message || 'Internal server error';
 
-    // Estructurar el mensaje si es un objeto (procedente de NestJS ValidationPipe por ejemplo)
+    // Estructurar el mensaje si es un objeto
     const errorResponse = typeof message === 'object' ? message : { message };
+
+    console.log('--- EXCEPCIÓN CAPTURADA ---');
+    console.log('Status:', status);
+    console.log('Exception:', exception);
+    console.log('---------------------------');
 
     this.logger.error(
       `${isRpc ? 'RPC' : 'HTTP'} Status: ${status} Error Message: ${JSON.stringify(

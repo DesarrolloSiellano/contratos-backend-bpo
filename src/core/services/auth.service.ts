@@ -10,11 +10,16 @@ export class AuthService {
   ) { }
 
   async changePassword(changePassword: ChangePassword) {
-    const userResponse = await firstValueFrom(
-      this.userClient.send({ cmd: 'changePassword' }, changePassword),
-    );
-
-
-    return userResponse;
+    console.log('Enviando a microservicio:', changePassword);
+    try {
+      const userResponse = await firstValueFrom(
+        this.userClient.send({ cmd: 'changePassword' }, changePassword),
+      );
+      console.log('Respuesta del microservicio:', userResponse);
+      return userResponse;
+    } catch (error) {
+      console.error('ERROR CRÍTICO TCP:', error);
+      throw error;
+    }
   }
 }

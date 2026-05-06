@@ -1,3 +1,5 @@
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+
 export interface User {
   name: string;
   lastName: string;
@@ -84,7 +86,15 @@ export interface Rol extends Document {
 
 
 export class ChangePassword {
+  @IsString()
+  @IsOptional()
   id: string;
+
+  @IsString()
+  @IsNotEmpty()
   currentPassword: string;
+
+  @IsString()
+  @IsNotEmpty()
   newPassword: string;
 }
