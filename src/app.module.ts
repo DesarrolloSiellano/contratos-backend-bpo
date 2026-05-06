@@ -15,6 +15,7 @@ import { SupportModule } from './support/support.module';
 import { LoggerModule } from 'nestjs-pino';
 import { IdempotencyModule } from './core/idempotency/idempotency.module';
 import { AuthModule } from './core/modules/auth.module';
+import { TcpClientModule } from './core/tcp/tcp.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { AuthModule } from './core/modules/auth.module';
     }),
     DatabasePSModule,
     TaskModule,
+    TcpClientModule,
     ContractorModule,
     ContractorChecklistModule,
     ContractModule,
