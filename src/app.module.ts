@@ -14,6 +14,7 @@ import { ObjectiveModule } from './objective/objective.module';
 import { SupportModule } from './support/support.module';
 import { LoggerModule } from 'nestjs-pino';
 import { IdempotencyModule } from './core/idempotency/idempotency.module';
+import { AuthModule } from './core/modules/auth.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { IdempotencyModule } from './core/idempotency/idempotency.module';
     ObjectiveModule,
     SupportModule,
     IdempotencyModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
