@@ -91,4 +91,9 @@ export class CreateContractorChecklistDto {
 
     @ApiPropertyOptional({ description: 'Diploma Pregrado - Verificación' }) @IsString() @IsOptional() diplomaPregrado_verif?: string;
     @ApiPropertyOptional({ description: 'Diploma Pregrado - Observaciones' }) @IsString() @IsOptional() diplomaPregrado_obs?: string;
+
+    @ApiPropertyOptional({ description: 'ID de la empresa', example: 'mi-empresa-id' })
+    @IsString()
+    @IsOptional()
+    company?: string;
 }

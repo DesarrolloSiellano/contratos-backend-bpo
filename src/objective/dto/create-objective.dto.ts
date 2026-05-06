@@ -20,4 +20,9 @@ export class CreateObjectiveDto {
     @IsString()
     @IsNotEmpty()
     contratoId: string;
+
+    @ApiPropertyOptional({ description: 'ID de la empresa', example: 'mi-empresa-id' })
+    @IsString()
+    @IsOptional()
+    company?: string;
 }

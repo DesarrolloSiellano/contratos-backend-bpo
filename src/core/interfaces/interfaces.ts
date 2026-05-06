@@ -1,4 +1,5 @@
 import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export interface User {
   name: string;
@@ -86,14 +87,17 @@ export interface Rol extends Document {
 
 
 export class ChangePassword {
+  @ApiPropertyOptional({ description: 'ID del usuario (se inyecta automáticamente)', example: '60d5ecb863904707cf28679b' })
   @IsString()
   @IsOptional()
   id: string;
 
+  @ApiProperty({ description: 'Contraseña actual', example: 'Password123!' })
   @IsString()
   @IsNotEmpty()
   currentPassword: string;
 
+  @ApiProperty({ description: 'Nueva contraseña', example: 'NewSecurePass456!' })
   @IsString()
   @IsNotEmpty()
   newPassword: string;

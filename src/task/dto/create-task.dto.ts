@@ -117,4 +117,9 @@ export class CreateTaskDto {
     @IsString()
     @IsOptional()
     porcentajeAvanceNoAlcanzadoAcumulado?: string;
+
+    @ApiPropertyOptional({ description: 'ID de la empresa', example: 'mi-empresa-id' })
+    @IsString()
+    @IsOptional()
+    company?: string;
 }

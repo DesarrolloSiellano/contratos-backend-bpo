@@ -150,4 +150,10 @@ export class CreateContractDto {
     @IsNumber()
     @IsNotEmpty()
     contratistaId: number;
+
+    @ApiPropertyOptional({ description: 'ID de la empresa', example: 'mi-empresa-id' })
+    @IsString()
+    @IsOptional()
+    @MaxLength(150)
+    company?: string;
 }

@@ -25,6 +25,25 @@
 
 For detailed information about the system architecture, data models (ERD), and validation flows, please refer to the [Architecture Documentation](ARCHITECTURE.md).
 
+## Features implemented recently
+
+### 1. Standardized Pagination & Global Search
+Most entities now support a standardized pagination endpoint at `/api/[resource]/page`.
+
+**Parameters:**
+- `from`: Offset (default: 0)
+- `limit`: Number of records to return (default: 10)
+- `global`: Search term for filtering multiple fields simultaneously (Case-insensitive).
+
+### 2. Multi-tenancy Support
+Data is now partitioned by `company`.
+- **SuperAdmins** can see data from all companies.
+- **Standard Users** are restricted to data associated with their own `company` (extracted automatically from the JWT token).
+
+### 3. Authentication Stability
+- Fixed TCP communication with the Authentication Microservice.
+- Secure password change flow with user ID validation.
+
 ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.

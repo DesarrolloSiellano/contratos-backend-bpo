@@ -103,4 +103,9 @@ export class CreateContractorDto {
     @IsBoolean()
     @IsOptional()
     contratoVigente?: boolean;
+    @ApiPropertyOptional({ description: 'ID de la empresa', example: 'mi-empresa-id' })
+    @IsString()
+    @IsOptional()
+    @MaxLength(150)
+    company?: string;
 }

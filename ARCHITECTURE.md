@@ -28,23 +28,27 @@ erDiagram
         string numero_doc
         string nom
         string email
+        string company
     }
     CONTRATO {
         uuid id
         string numero_contrato
         date fecha_inicio
         date fecha_fin
+        string company
     }
     PERIODO {
         uuid id
         string numero_periodo
         date fecha_inicial
         date fecha_final
+        string company
     }
     EVALUACION {
         uuid id
         string responsable
         string porcentaje_evaluado
+        string company
     }
     SOPORTE {
         uuid id
@@ -52,6 +56,7 @@ erDiagram
         string mimetype
         string url
         boolean revisado
+        string company
     }
 ```
 
@@ -78,12 +83,19 @@ graph TD
     Support -.-> AllEntities[Todas las Entidades]
 ```
 
-## 3. Seguridad y Autenticación
+## 3. Seguridad y Multi-tenancy
 
+### 3.1 Autenticación (JWT)
 El sistema implementa un esquema de seguridad basado en **JWT (JSON Web Tokens)**:
 - **JwtAuthGuard Personalizado:** Ubicado en `src/core/guards/jwt-auth.guard.ts`. Maneja la validación de tokens y lanza excepciones específicas como `SESSION_EXPIRED`.
 - **Registro de Auditoría:** Cada intento de acceso (exitoso o fallido) se registra mediante el sistema de logs, incluyendo el ID del usuario y el error detectado.
 - **Protección Global:** Todos los controladores de recursos requieren un token válido en el header `Authorization: Bearer <token>`.
+
+### 3.2 Lógica de Multi-tenancy (Empresas)
+A partir de la versión actual, el sistema implementa una partición lógica de datos por empresa (`company`):
+- **Aislamiento:** Todas las entidades principales poseen un campo `company` que almacena el identificador de la organización.
+- **Filtrado Automático:** En los métodos de consulta (especialmente en `findByPage`), se inyecta automáticamente el filtro `where: { company: user.company }` si el usuario no posee el rol de `isSuperAdmin`.
+- **Visibilidad Total:** Los SuperAdministradores pueden consultar registros de todas las empresas omitiendo este filtro.
 
 ## 4. Gestión Documental (Soportes)
 
@@ -139,4 +151,9 @@ JWT_EXPIRES_IN=24h
 
 # Rutas de Archivos
 UPLOAD_LOCATION=./uploads/supports
+
+# conexion a microservicio de auth
+USER_MS_HOST=app.bponet.com.co
+USER_MS_PORT=3011
+
 ```
