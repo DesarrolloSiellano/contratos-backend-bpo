@@ -128,6 +128,9 @@ export class ContractorChecklist {
     @CreateDateColumn({ type: 'timestamptz', name: 'fecha_creacion' })
     fechaCreacion: Date;
 
+    @Column({ type: 'varchar', length: 150, nullable: true })
+    company: string;
+
     @UpdateDateColumn({ type: 'timestamptz', name: 'fecha_modificacion' })
     fechaModificacion: Date;
 }

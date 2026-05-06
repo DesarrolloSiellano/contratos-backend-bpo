@@ -8,9 +8,11 @@ import {
   Delete,
   ParseUUIDPipe,
   UseGuards,
+  Query,
+  Req,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../core/guards/jwt-auth.guard';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { TaskService } from './task.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -21,6 +23,20 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 @Controller('task')
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
+
+  @Get('page')
+  @ApiOperation({ summary: 'Obtener tareas paginadas con búsqueda global' })
+  @ApiQuery({ name: 'from', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'global', required: false, type: String })
+  findByPage(
+    @Query('from') from: number,
+    @Query('limit') limit: number,
+    @Query('global') global: string,
+    @Req() req: any,
+  ) {
+    return this.taskService.findByPage(req.user, from, limit, global);
+  }
 
   @Post()
   @ApiOperation({ summary: 'Crear una nueva tarea' })

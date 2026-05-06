@@ -7,8 +7,10 @@ import {
     Param,
     Delete,
     UseGuards,
+    Query,
+    Req,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../core/guards/jwt-auth.guard';
 import { ObjectiveService } from './objective.service';
 import { CreateObjectiveDto } from './dto/create-objective.dto';
@@ -20,6 +22,20 @@ import { UpdateObjectiveDto } from './dto/update-objective.dto';
 @Controller('objective')
 export class ObjectiveController {
     constructor(private readonly objectiveService: ObjectiveService) {}
+
+    @Get('page')
+    @ApiOperation({ summary: 'Obtener objetivos paginados con búsqueda global' })
+    @ApiQuery({ name: 'from', required: false, type: Number })
+    @ApiQuery({ name: 'limit', required: false, type: Number })
+    @ApiQuery({ name: 'global', required: false, type: String })
+    findByPage(
+        @Query('from') from: number,
+        @Query('limit') limit: number,
+        @Query('global') global: string,
+        @Req() req: any,
+    ) {
+        return this.objectiveService.findByPage(req.user, from, limit, global);
+    }
 
     @Post()
     @ApiOperation({ summary: 'Crear un nuevo objetivo para un contrato' })

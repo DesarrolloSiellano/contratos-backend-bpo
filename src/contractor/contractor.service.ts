@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import { CreateContractorDto } from './dto/create-contractor.dto';
 import { UpdateContractorDto } from './dto/update-contractor.dto';
 import { Contratista } from './entities/contractor.entity';
@@ -11,6 +11,49 @@ export class ContractorService {
     @InjectRepository(Contratista)
     private readonly contractorRepository: Repository<Contratista>,
   ) {}
+
+  async findByPage(
+    user: any,
+    from: number = 0,
+    limit: number = 10,
+    global?: string,
+  ) {
+    const { isSuperAdmin, company } = user;
+    const skip = from;
+    const take = limit;
+
+    let where: any = {};
+
+    // Si no es SuperAdmin, filtramos por empresa
+    if (!isSuperAdmin) {
+      where.company = company;
+    }
+
+    // Lógica de búsqueda global (OR en varios campos)
+    if (global) {
+      const searchFields = ['nombres', 'apellidos', 'numeroDocumento', 'email', 'celular', 'company'];
+      where = searchFields.map(field => {
+        const condition: any = { ...where };
+        condition[field] = ILike(`%${global}%`);
+        return condition;
+      });
+    }
+
+    const [docs, totalData] = await this.contractorRepository.findAndCount({
+      where: Object.keys(where).length > 0 ? where : undefined,
+      skip,
+      take,
+      order: { createdAt: 'DESC' } as any,
+    });
+
+    return {
+      message: 'Contractors paginated successfully',
+      data: docs,
+      meta: {
+        totalData: totalData,
+      },
+    };
+  }
 
   async create(createContractorDto: CreateContractorDto) {
     const contractor = this.contractorRepository.create(createContractorDto);

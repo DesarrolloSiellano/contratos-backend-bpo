@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import { Evaluation } from './entities/evaluation.entity';
 import { CreateEvaluationDto } from './dto/create-evaluation.dto';
 import { UpdateEvaluationDto } from './dto/update-evaluation.dto';
@@ -11,6 +11,48 @@ export class EvaluationService {
         @InjectRepository(Evaluation)
         private readonly evaluationRepository: Repository<Evaluation>,
     ) {}
+
+    async findByPage(
+        user: any,
+        from: number = 0,
+        limit: number = 10,
+        global?: string,
+    ) {
+        const { isSuperAdmin, company } = user;
+        const skip = from;
+        const take = limit;
+
+        let where: any = {};
+
+        if (!isSuperAdmin) {
+            where.company = company;
+        }
+
+        if (global) {
+            const searchFields = ['responsable', 'observaciones', 'rangoPeriodo', 'company'];
+            where = searchFields.map(field => {
+                const condition: any = { ...where };
+                condition[field] = ILike(`%${global}%`);
+                return condition;
+            });
+        }
+
+        const [docs, totalData] = await this.evaluationRepository.findAndCount({
+            where: Object.keys(where).length > 0 ? where : undefined,
+            skip,
+            take,
+            relations: ['contrato', 'contratista', 'periodo'],
+            order: { fechaCreacion: 'DESC' } as any,
+        });
+
+        return {
+            message: 'Evaluations paginated successfully',
+            data: docs,
+            meta: {
+                totalData: totalData,
+            },
+        };
+    }
 
     async create(createDto: CreateEvaluationDto) {
         const evaluation = this.evaluationRepository.create(createDto);

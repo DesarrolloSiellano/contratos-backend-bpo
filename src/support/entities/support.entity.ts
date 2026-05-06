@@ -60,6 +60,9 @@ export class Support {
     @Column({ type: 'date', nullable: true, name: 'fecha_revision' })
     fechaRevision: string;
 
+    @Column({ type: 'varchar', length: 150, nullable: true })
+    company: string;
+
     @CreateDateColumn({ type: 'timestamptz', name: 'fecha_creacion' })
     fechaCreacion: Date;
 

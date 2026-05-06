@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import { Support } from './entities/support.entity';
 import { CreateSupportDto } from './dto/create-support.dto';
 import { UpdateSupportDto } from './dto/update-support.dto';
@@ -18,6 +18,48 @@ export class SupportService {
         if (!fs.existsSync(this.uploadPath)) {
             fs.mkdirSync(this.uploadPath, { recursive: true });
         }
+    }
+
+    async findByPage(
+        user: any,
+        from: number = 0,
+        limit: number = 10,
+        global?: string,
+    ) {
+        const { isSuperAdmin, company } = user;
+        const skip = from;
+        const take = limit;
+
+        let where: any = {};
+
+        if (!isSuperAdmin) {
+            where.company = company;
+        }
+
+        if (global) {
+            const searchFields = ['originalFilename', 'descripcion', 'responsable', 'company'];
+            where = searchFields.map(field => {
+                const condition: any = { ...where };
+                condition[field] = ILike(`%${global}%`);
+                return condition;
+            });
+        }
+
+        const [docs, totalData] = await this.supportRepository.findAndCount({
+            where: Object.keys(where).length > 0 ? where : undefined,
+            skip,
+            take,
+            relations: ['contrato', 'tarea', 'periodo', 'contratista', 'objetivo'],
+            order: { fechaCreacion: 'DESC' } as any,
+        });
+
+        return {
+            message: 'Supports paginated successfully',
+            data: docs,
+            meta: {
+                totalData: totalData,
+            },
+        };
     }
 
     async uploadFile(file: Express.Multer.File, createDto: CreateSupportDto) {

@@ -77,6 +77,9 @@ export class Tarea {
     @Column({ type: 'varchar', length: 20, nullable: true })
     porcentajeAvanceNoAlcanzadoAcumulado: string;
 
+    @Column({ type: 'varchar', length: 150, nullable: true })
+    company: string;
+
     @OneToMany(() => Support, (support) => support.tarea)
     soportes: Support[];
 }

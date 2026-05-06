@@ -7,8 +7,10 @@ import {
     Param,
     Delete,
     UseGuards,
+    Query,
+    Req,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../core/guards/jwt-auth.guard';
 import { EvaluationService } from './evaluation.service';
 import { CreateEvaluationDto } from './dto/create-evaluation.dto';
@@ -20,6 +22,20 @@ import { UpdateEvaluationDto } from './dto/update-evaluation.dto';
 @Controller('evaluation')
 export class EvaluationController {
     constructor(private readonly evaluationService: EvaluationService) {}
+
+    @Get('page')
+    @ApiOperation({ summary: 'Obtener evaluaciones paginadas con búsqueda global' })
+    @ApiQuery({ name: 'from', required: false, type: Number })
+    @ApiQuery({ name: 'limit', required: false, type: Number })
+    @ApiQuery({ name: 'global', required: false, type: String })
+    findByPage(
+        @Query('from') from: number,
+        @Query('limit') limit: number,
+        @Query('global') global: string,
+        @Req() req: any,
+    ) {
+        return this.evaluationService.findByPage(req.user, from, limit, global);
+    }
 
     @Post()
     @ApiOperation({ summary: 'Registrar una nueva evaluación' })

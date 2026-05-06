@@ -22,6 +22,9 @@ export class Objective {
     @Column({ type: 'text', nullable: true })
     producto: string;
 
+    @Column({ type: 'varchar', length: 150, nullable: true })
+    company: string;
+
     @CreateDateColumn({ type: 'timestamptz', name: 'fecha_creacion' })
     fechaCreacion: Date;
 

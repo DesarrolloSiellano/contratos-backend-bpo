@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Req } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../core/guards/jwt-auth.guard';
 import { ContractorService } from './contractor.service';
 import { CreateContractorDto } from './dto/create-contractor.dto';
@@ -11,6 +11,20 @@ import { UpdateContractorDto } from './dto/update-contractor.dto';
 @Controller('contractor')
 export class ContractorController {
   constructor(private readonly contractorService: ContractorService) {}
+
+  @Get('page')
+  @ApiOperation({ summary: 'Obtener contratistas paginados con búsqueda global' })
+  @ApiQuery({ name: 'from', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'global', required: false, type: String })
+  findByPage(
+    @Query('from') from: number,
+    @Query('limit') limit: number,
+    @Query('global') global: string,
+    @Req() req: any,
+  ) {
+    return this.contractorService.findByPage(req.user, from, limit, global);
+  }
 
   @Post()
   @ApiOperation({ summary: 'Crear un nuevo contratista' })

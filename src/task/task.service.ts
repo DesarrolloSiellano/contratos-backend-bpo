@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { Tarea } from './entities/task.entity';
@@ -11,6 +11,48 @@ export class TaskService {
     @InjectRepository(Tarea)
     private readonly tareaRepository: Repository<Tarea>,
   ) {}
+
+  async findByPage(
+    user: any,
+    from: number = 0,
+    limit: number = 10,
+    global?: string,
+  ) {
+    const { isSuperAdmin, company } = user;
+    const skip = from;
+    const take = limit;
+
+    let where: any = {};
+
+    if (!isSuperAdmin) {
+      where.company = company;
+    }
+
+    if (global) {
+      const searchFields = ['tarea', 'responsable', 'responsableSupervisor', 'nombreReferente', 'company'];
+      where = searchFields.map(field => {
+        const condition: any = { ...where };
+        condition[field] = ILike(`%${global}%`);
+        return condition;
+      });
+    }
+
+    const [docs, totalData] = await this.tareaRepository.findAndCount({
+      where: Object.keys(where).length > 0 ? where : undefined,
+      skip,
+      take,
+      relations: ['contrato'],
+      order: { id: 'DESC' } as any,
+    });
+
+    return {
+      message: 'Tasks paginated successfully',
+      data: docs,
+      meta: {
+        totalData: totalData,
+      },
+    };
+  }
 
   async create(createTaskDto: CreateTaskDto) {
     const nuevaTarea = this.tareaRepository.create(createTaskDto);

@@ -44,6 +44,9 @@ export class Evaluation {
     @Column({ type: 'varchar', length: 50, nullable: true, name: 'valor_periodo' })
     valorPeriodo: string;
 
+    @Column({ type: 'varchar', length: 150, nullable: true })
+    company: string;
+
     @CreateDateColumn({ type: 'timestamptz', name: 'fecha_creacion' })
     fechaCreacion: Date;
 

@@ -10,9 +10,11 @@ import {
     UploadedFile,
     Res,
     UseGuards,
+    Query,
+    Req,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { extname } from 'path';
@@ -27,6 +29,21 @@ import type { Response } from 'express';
 @Controller('support')
 export class SupportController {
     constructor(private readonly supportService: SupportService) {}
+
+    @Get('page')
+    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Obtener soportes paginados con búsqueda global' })
+    @ApiQuery({ name: 'from', required: false, type: Number })
+    @ApiQuery({ name: 'limit', required: false, type: Number })
+    @ApiQuery({ name: 'global', required: false, type: String })
+    findByPage(
+        @Query('from') from: number,
+        @Query('limit') limit: number,
+        @Query('global') global: string,
+        @Req() req: any,
+    ) {
+        return this.supportService.findByPage(req.user, from, limit, global);
+    }
 
     @Post('upload')
     @UseGuards(JwtAuthGuard)

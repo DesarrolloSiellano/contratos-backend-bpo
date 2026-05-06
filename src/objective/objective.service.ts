@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import { Objective } from './entities/objective.entity';
 import { CreateObjectiveDto } from './dto/create-objective.dto';
 import { UpdateObjectiveDto } from './dto/update-objective.dto';
@@ -11,6 +11,48 @@ export class ObjectiveService {
         @InjectRepository(Objective)
         private readonly objectiveRepository: Repository<Objective>,
     ) {}
+
+    async findByPage(
+        user: any,
+        from: number = 0,
+        limit: number = 10,
+        global?: string,
+    ) {
+        const { isSuperAdmin, company } = user;
+        const skip = from;
+        const take = limit;
+
+        let where: any = {};
+
+        if (!isSuperAdmin) {
+            where.company = company;
+        }
+
+        if (global) {
+            const searchFields = ['objetivo', 'producto', 'company'];
+            where = searchFields.map(field => {
+                const condition: any = { ...where };
+                condition[field] = ILike(`%${global}%`);
+                return condition;
+            });
+        }
+
+        const [docs, totalData] = await this.objectiveRepository.findAndCount({
+            where: Object.keys(where).length > 0 ? where : undefined,
+            skip,
+            take,
+            relations: ['contrato', 'soportes'],
+            order: { fechaCreacion: 'DESC' } as any,
+        });
+
+        return {
+            message: 'Objectives paginated successfully',
+            data: docs,
+            meta: {
+                totalData: totalData,
+            },
+        };
+    }
 
     async create(createDto: CreateObjectiveDto) {
         const objective = this.objectiveRepository.create(createDto);

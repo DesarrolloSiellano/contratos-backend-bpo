@@ -31,6 +31,9 @@ export class Period {
     @Column({ type: 'varchar', length: 50, nullable: true })
     valor: string;
 
+    @Column({ type: 'varchar', length: 150, nullable: true })
+    company: string;
+
     @CreateDateColumn({ type: 'timestamptz', name: 'fecha_creacion' })
     fechaCreacion: Date;
 

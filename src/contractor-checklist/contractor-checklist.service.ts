@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import { ContractorChecklist } from './entities/contractor-checklist.entity';
 import { CreateContractorChecklistDto } from './dto/create-contractor-checklist.dto';
 import { UpdateContractorChecklistDto } from './dto/update-contractor-checklist.dto';
@@ -11,6 +11,48 @@ export class ContractorChecklistService {
         @InjectRepository(ContractorChecklist)
         private readonly checklistRepository: Repository<ContractorChecklist>,
     ) {}
+
+    async findByPage(
+        user: any,
+        from: number = 0,
+        limit: number = 10,
+        global?: string,
+    ) {
+        const { isSuperAdmin, company } = user;
+        const skip = from;
+        const take = limit;
+
+        let where: any = {};
+
+        if (!isSuperAdmin) {
+            where.company = company;
+        }
+
+        if (global) {
+            const searchFields = ['liderProceso', 'ocupacion', 'telefono', 'company'];
+            where = searchFields.map(field => {
+                const condition: any = { ...where };
+                condition[field] = ILike(`%${global}%`);
+                return condition;
+            });
+        }
+
+        const [docs, totalData] = await this.checklistRepository.findAndCount({
+            where: Object.keys(where).length > 0 ? where : undefined,
+            skip,
+            take,
+            relations: ['contratista'],
+            order: { fechaCreacion: 'DESC' } as any,
+        });
+
+        return {
+            message: 'Checklists paginated successfully',
+            data: docs,
+            meta: {
+                totalData: totalData,
+            },
+        };
+    }
 
     async create(createDto: CreateContractorChecklistDto) {
         const checklist = this.checklistRepository.create(createDto);

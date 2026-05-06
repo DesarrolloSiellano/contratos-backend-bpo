@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import { Contract } from './entities/contract.entity';
 import { CreateContractDto } from './dto/create-contract.dto';
 import { UpdateContractDto } from './dto/update-contract.dto';
@@ -11,6 +11,48 @@ export class ContractService {
         @InjectRepository(Contract)
         private readonly contractRepository: Repository<Contract>,
     ) {}
+
+    async findByPage(
+        user: any,
+        from: number = 0,
+        limit: number = 10,
+        global?: string,
+    ) {
+        const { isSuperAdmin, company } = user;
+        const skip = from;
+        const take = limit;
+
+        let where: any = {};
+
+        if (!isSuperAdmin) {
+            where.company = company;
+        }
+
+        if (global) {
+            const searchFields = ['numeroContrato', 'documentoContratista', 'nombreReferente', 'responsableSupervisor', 'company'];
+            where = searchFields.map(field => {
+                const condition: any = { ...where };
+                condition[field] = ILike(`%${global}%`);
+                return condition;
+            });
+        }
+
+        const [docs, totalData] = await this.contractRepository.findAndCount({
+            where: Object.keys(where).length > 0 ? where : undefined,
+            skip,
+            take,
+            relations: ['contratista'],
+            order: { fechaCreacion: 'DESC' } as any,
+        });
+
+        return {
+            message: 'Contracts paginated successfully',
+            data: docs,
+            meta: {
+                totalData: totalData,
+            },
+        };
+    }
 
     async create(createDto: CreateContractDto) {
         const contract = this.contractRepository.create(createDto);

@@ -80,6 +80,9 @@ export class Contratista {
     })
     contratoVigente: boolean;
 
+    @Column({ type: 'varchar', length: 150, nullable: true })
+    company: string;
+
     @OneToMany(() => ContractorChecklist, (checklist) => checklist.contratista)
     listasChequeo: ContractorChecklist[];
 

@@ -7,8 +7,10 @@ import {
     Param,
     Delete,
     UseGuards,
+    Query,
+    Req,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ContractService } from './contract.service';
 import { JwtAuthGuard } from '../core/guards/jwt-auth.guard';
 import { CreateContractDto } from './dto/create-contract.dto';
@@ -20,6 +22,20 @@ import { UpdateContractDto } from './dto/update-contract.dto';
 @Controller('contract')
 export class ContractController {
     constructor(private readonly contractService: ContractService) { }
+
+    @Get('page')
+    @ApiOperation({ summary: 'Obtener contratos paginados con búsqueda global' })
+    @ApiQuery({ name: 'from', required: false, type: Number })
+    @ApiQuery({ name: 'limit', required: false, type: Number })
+    @ApiQuery({ name: 'global', required: false, type: String })
+    findByPage(
+        @Query('from') from: number,
+        @Query('limit') limit: number,
+        @Query('global') global: string,
+        @Req() req: any,
+    ) {
+        return this.contractService.findByPage(req.user, from, limit, global);
+    }
 
     @Post()
     @ApiOperation({ summary: 'Crear un nuevo contrato' })
