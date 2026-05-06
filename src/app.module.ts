@@ -13,6 +13,7 @@ import { PeriodModule } from './period/period.module';
 import { ObjectiveModule } from './objective/objective.module';
 import { SupportModule } from './support/support.module';
 import { LoggerModule } from 'nestjs-pino';
+import { IdempotencyModule } from './core/idempotency/idempotency.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { LoggerModule } from 'nestjs-pino';
     PeriodModule,
     ObjectiveModule,
     SupportModule,
+    IdempotencyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

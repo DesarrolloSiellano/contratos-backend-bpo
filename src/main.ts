@@ -7,6 +7,8 @@ import { Logger } from 'nestjs-pino';
 import { ensureDatabaseExists } from './core/database/database-utils';
 import { ResponseInterceptor } from './core/interceptors/response.interceptor';
 import { HttpExceptionFilter } from './core/filters/http-exception.filter';
+import { IdempotencyInterceptor } from './core/interceptors/idempotency.interceptor';
+import { IdempotencyService } from './core/idempotency/idempotency.service';
 
 async function bootstrap() {
   // Asegurar que la base de datos existe antes de que TypeORM intente conectarse
@@ -52,7 +54,11 @@ async function bootstrap() {
     transform: true,
   }));
 
-  app.useGlobalInterceptors(new ResponseInterceptor());
+  const idempotencyService = app.get(IdempotencyService);
+  app.useGlobalInterceptors(
+    new IdempotencyInterceptor(idempotencyService),
+    new ResponseInterceptor(),
+  );
   app.useGlobalFilters(new HttpExceptionFilter());
 
   await app.listen(process.env.PORT ?? 3000);
