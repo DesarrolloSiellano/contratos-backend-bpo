@@ -1,5 +1,22 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Req } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Query,
+  Req,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../core/guards/jwt-auth.guard';
 import { ContractorService } from './contractor.service';
 import { CreateContractorDto } from './dto/create-contractor.dto';
@@ -12,8 +29,10 @@ import { UpdateContractorDto } from './dto/update-contractor.dto';
 export class ContractorController {
   constructor(private readonly contractorService: ContractorService) {}
 
-  @Get('page')
-  @ApiOperation({ summary: 'Obtener contratistas paginados con búsqueda global' })
+  @Get('findByPage')
+  @ApiOperation({
+    summary: 'Obtener contratistas paginados con búsqueda global',
+  })
   @ApiQuery({ name: 'from', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'global', required: false, type: String })
@@ -50,14 +69,23 @@ export class ContractorController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Actualizar un contratista por ID' })
-  @ApiResponse({ status: 200, description: 'Contratista actualizado exitosamente.' })
-  update(@Param('id') id: string, @Body() updateContractorDto: UpdateContractorDto) {
+  @ApiResponse({
+    status: 200,
+    description: 'Contratista actualizado exitosamente.',
+  })
+  update(
+    @Param('id') id: string,
+    @Body() updateContractorDto: UpdateContractorDto,
+  ) {
     return this.contractorService.update(id, updateContractorDto);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Eliminar un contratista por ID' })
-  @ApiResponse({ status: 200, description: 'Contratista eliminado exitosamente.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Contratista eliminado exitosamente.',
+  })
   remove(@Param('id') id: string) {
     return this.contractorService.remove(id);
   }
