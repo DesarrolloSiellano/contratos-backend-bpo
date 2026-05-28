@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { TaskModule } from './task/task.module';
 import { DatabasePSModule } from './core/database/postgres.module';
+import { DatabaseModule } from './core/database/database.module';
 import { ContractorModule } from './contractor/contractor.module';
 import { ContractorChecklistModule } from './contractor-checklist/contractor-checklist.module';
 import { ContractModule } from './contract/contract.module';
@@ -16,6 +17,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { IdempotencyModule } from './core/idempotency/idempotency.module';
 import { AuthModule } from './core/modules/auth.module';
 import { TcpClientModule } from './core/tcp/tcp.module';
+import { MailModule } from './core/mail/mail.module';
 
 @Module({
   imports: [
@@ -58,6 +60,7 @@ import { TcpClientModule } from './core/tcp/tcp.module';
       },
     }),
     DatabasePSModule,
+    DatabaseModule,
     TaskModule,
     TcpClientModule,
     ContractorModule,
@@ -69,6 +72,7 @@ import { TcpClientModule } from './core/tcp/tcp.module';
     SupportModule,
     IdempotencyModule,
     AuthModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

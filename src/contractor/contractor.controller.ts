@@ -45,20 +45,20 @@ export class ContractorController {
   @ApiResponse({ status: 200, description: 'Contratista encontrado.' })
   @ApiResponse({ status: 404, description: 'Contratista no encontrado.' })
   findOne(@Param('id') id: string) {
-    return this.contractorService.findOne(+id);
+    return this.contractorService.findOne(id);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Actualizar un contratista por ID' })
   @ApiResponse({ status: 200, description: 'Contratista actualizado exitosamente.' })
   update(@Param('id') id: string, @Body() updateContractorDto: UpdateContractorDto) {
-    return this.contractorService.update(+id, updateContractorDto);
+    return this.contractorService.update(id, updateContractorDto);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Eliminar un contratista por ID' })
   @ApiResponse({ status: 200, description: 'Contratista eliminado exitosamente.' })
   remove(@Param('id') id: string) {
-    return this.contractorService.remove(+id);
+    return this.contractorService.remove(id);
   }
 }

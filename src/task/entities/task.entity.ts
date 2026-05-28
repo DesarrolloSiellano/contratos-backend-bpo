@@ -1,8 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, Index } from 'typeorm';
 import { Contract } from '../../contract/entities/contract.entity';
 import { Support } from '../../support/entities/support.entity';
 
 @Entity('tareas')
+@Index(['company', 'tenantId'])
 export class Tarea {
     @PrimaryGeneratedColumn('uuid')
     id: string;
@@ -11,6 +12,7 @@ export class Tarea {
     @JoinColumn({ name: 'contrato_id' })
     contrato: Contract;
 
+    @Index('idx_tareas_contrato')
     @Column({ name: 'contrato_id', nullable: true })
     contratoId: string;
 
@@ -56,29 +58,32 @@ export class Tarea {
     @Column({ type: 'varchar', length: 100, nullable: true })
     diasSemana: string;
 
-    @Column({ type: 'varchar', length: 20, nullable: true })
-    porcentajeAvanceProgramado: string;
+    @Column({ type: 'numeric', precision: 5, scale: 2, nullable: true, name: 'porcentaje_avance_programado' })
+    porcentajeAvanceProgramado: number;
 
-    @Column({ type: 'varchar', length: 20, nullable: true })
-    porcentajeRestante: string;
+    @Column({ type: 'numeric', precision: 5, scale: 2, nullable: true, name: 'porcentaje_restante' })
+    porcentajeRestante: number;
 
     @Column({ type: 'boolean', default: false })
     completado: boolean;
 
-    @Column({ type: 'varchar', length: 20, nullable: true })
-    porcentajeAvanceAlzanzado: string;
+    @Column({ type: 'numeric', precision: 5, scale: 2, nullable: true, name: 'porcentaje_avance_alcanzado' })
+    porcentajeAvanceAlcanzado: number;
 
     @Column({ type: 'text', nullable: true })
     observaciones: string;
 
-    @Column({ type: 'varchar', length: 20, nullable: true })
-    porcentajeAvanceprogramadoAcumulado: string;
+    @Column({ type: 'numeric', precision: 5, scale: 2, nullable: true, name: 'porcentaje_avance_programado_acumulado' })
+    porcentajeAvanceProgramadoAcumulado: number;
 
-    @Column({ type: 'varchar', length: 20, nullable: true })
-    porcentajeAvanceNoAlcanzadoAcumulado: string;
+    @Column({ type: 'numeric', precision: 5, scale: 2, nullable: true, name: 'porcentaje_avance_no_alcanzado_acumulado' })
+    porcentajeAvanceNoAlcanzadoAcumulado: number;
 
     @Column({ type: 'varchar', length: 150, nullable: true })
     company: string;
+
+    @Column({ type: 'varchar', length: 150, nullable: true, name: 'tenant_id' })
+    tenantId: string;
 
     @OneToMany(() => Support, (support) => support.tarea)
     soportes: Support[];

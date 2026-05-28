@@ -101,7 +101,7 @@ export class CreateTaskDto {
     @ApiPropertyOptional({ description: 'Porcentaje de avance alcanzado' })
     @IsString()
     @IsOptional()
-    porcentajeAvanceAlzanzado?: string;
+    porcentajeAvanceAlcanzado?: string;
 
     @ApiPropertyOptional({ description: 'Observaciones' })
     @IsString()
@@ -111,7 +111,7 @@ export class CreateTaskDto {
     @ApiPropertyOptional({ description: 'Porcentaje de avance programado acumulado' })
     @IsString()
     @IsOptional()
-    porcentajeAvanceprogramadoAcumulado?: string;
+    porcentajeAvanceProgramadoAcumulado?: string;
 
     @ApiPropertyOptional({ description: 'Porcentaje de avance no alcanzado acumulado' })
     @IsString()

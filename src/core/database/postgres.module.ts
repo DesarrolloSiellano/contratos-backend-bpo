@@ -2,6 +2,7 @@
 import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TenantSubscriber } from '../tenant/tenant.subscriber';
 
 @Global()
 @Module({
@@ -21,6 +22,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
             }),
         }),
     ],
+    providers: [TenantSubscriber],
     exports: [TypeOrmModule],
 })
 export class DatabasePSModule { }

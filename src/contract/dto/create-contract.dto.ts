@@ -109,7 +109,7 @@ export class CreateContractDto {
     @ApiPropertyOptional({ description: '¿Contrato prorrogado?', default: false })
     @IsBoolean()
     @IsOptional()
-    prorrogrado?: boolean;
+    prorrogado?: boolean;
 
     @ApiPropertyOptional({ description: '¿Contrato detenido?', default: false })
     @IsBoolean()
@@ -146,10 +146,10 @@ export class CreateContractDto {
     @IsOptional()
     valorParaPeriodos?: string;
 
-    @ApiProperty({ description: 'ID del contratista asociado', example: 1 })
-    @IsNumber()
+    @ApiProperty({ description: 'ID del contratista asociado', example: 'uuid-contratista' })
+    @IsString()
     @IsNotEmpty()
-    contratistaId: number;
+    contratistaId: string;
 
     @ApiPropertyOptional({ description: 'ID de la empresa', example: 'mi-empresa-id' })
     @IsString()

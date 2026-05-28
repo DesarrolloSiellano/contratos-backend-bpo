@@ -1,15 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, ILike } from 'typeorm';
+import { Repository, ILike, DataSource } from 'typeorm';
 import { Evaluation } from './entities/evaluation.entity';
 import { CreateEvaluationDto } from './dto/create-evaluation.dto';
 import { UpdateEvaluationDto } from './dto/update-evaluation.dto';
+import { Contratista } from '../contractor/entities/contractor.entity';
+import { MailService } from '../core/mail/mail.service';
 
 @Injectable()
 export class EvaluationService {
     constructor(
         @InjectRepository(Evaluation)
         private readonly evaluationRepository: Repository<Evaluation>,
+        private readonly mailService: MailService,
+        private readonly dataSource: DataSource,
     ) {}
 
     async findByPage(
@@ -18,15 +22,10 @@ export class EvaluationService {
         limit: number = 10,
         global?: string,
     ) {
-        const { isSuperAdmin, company } = user;
         const skip = from;
         const take = limit;
 
         let where: any = {};
-
-        if (!isSuperAdmin) {
-            where.company = company;
-        }
 
         if (global) {
             const searchFields = ['responsable', 'observaciones', 'rangoPeriodo', 'company'];
@@ -55,8 +54,32 @@ export class EvaluationService {
     }
 
     async create(createDto: CreateEvaluationDto) {
-        const evaluation = this.evaluationRepository.create(createDto);
-        const saved = await this.evaluationRepository.save(evaluation);
+        const evaluation: Evaluation = this.evaluationRepository.create({
+            ...createDto,
+            porcentajeEvaluado: Number(createDto.porcentajeEvaluado) || 0,
+            valorPeriodo: Number(createDto.valorPeriodo) || 0,
+        });
+        const saved: Evaluation = await this.evaluationRepository.save(evaluation);
+
+        // BR-19: Enviar correo automático de calificación al contratista
+        const contractor = await this.dataSource.getRepository(Contratista).findOne({
+            where: { id: saved.contratistaId }
+        });
+
+        if (contractor && contractor.email) {
+            await this.mailService.sendMailWithTemplate(
+                contractor.email,
+                'evaluation',
+                {
+                    contratistaName: `${contractor.nom} ${contractor.ape}`,
+                    periodoNumero: saved.periodoNumero || 'N/A',
+                    porcentajeCalificado: (saved.porcentajeEvaluado || 0).toString(),
+                    observaciones: saved.observaciones || 'Sin observaciones adicionales.',
+                    valorPeriodo: (saved.valorPeriodo || 0).toString(),
+                }
+            ).catch(err => console.error('Error al despachar email de evaluación:', err));
+        }
+
         return {
             message: 'Evaluation created successfully',
             data: saved,
@@ -101,14 +124,37 @@ export class EvaluationService {
     }
 
     async update(id: string, updateDto: UpdateEvaluationDto) {
-        const evaluation = await this.evaluationRepository.preload({
+        const preloaded = await this.evaluationRepository.preload({
             id,
             ...updateDto,
+            porcentajeEvaluado: updateDto.porcentajeEvaluado !== undefined ? Number(updateDto.porcentajeEvaluado) : undefined,
+            valorPeriodo: updateDto.valorPeriodo !== undefined ? Number(updateDto.valorPeriodo) : undefined,
         });
-        if (!evaluation) {
+
+        if (!preloaded) {
             throw new NotFoundException(`Evaluation with ID ${id} not found`);
         }
-        const updated = await this.evaluationRepository.save(evaluation);
+        const updated: Evaluation = await this.evaluationRepository.save(preloaded);
+
+        // BR-19: Enviar correo de actualización de calificación
+        const contractor = await this.dataSource.getRepository(Contratista).findOne({
+            where: { id: updated.contratistaId }
+        });
+
+        if (contractor && contractor.email) {
+            await this.mailService.sendMailWithTemplate(
+                contractor.email,
+                'evaluation',
+                {
+                    contratistaName: `${contractor.nom} ${contractor.ape}`,
+                    periodoNumero: updated.periodoNumero || 'N/A',
+                    porcentajeCalificado: (updated.porcentajeEvaluado || 0).toString(),
+                    observaciones: updated.observaciones || 'Sin observaciones adicionales.',
+                    valorPeriodo: (updated.valorPeriodo || 0).toString(),
+                }
+            ).catch(err => console.error('Error al despachar email de evaluación:', err));
+        }
+
         return {
             message: 'Evaluation updated successfully',
             data: updated,

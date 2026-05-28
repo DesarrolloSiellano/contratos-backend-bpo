@@ -1,9 +1,12 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, ILike } from 'typeorm';
+import { Repository, ILike, DataSource } from 'typeorm';
 import { Support } from './entities/support.entity';
 import { CreateSupportDto } from './dto/create-support.dto';
 import { UpdateSupportDto } from './dto/update-support.dto';
+import { Contratista } from '../contractor/entities/contractor.entity';
+import { Contract } from '../contract/entities/contract.entity';
+import { MailService } from '../core/mail/mail.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -14,6 +17,8 @@ export class SupportService {
     constructor(
         @InjectRepository(Support)
         private readonly supportRepository: Repository<Support>,
+        private readonly mailService: MailService,
+        private readonly dataSource: DataSource,
     ) {
         if (!fs.existsSync(this.uploadPath)) {
             fs.mkdirSync(this.uploadPath, { recursive: true });
@@ -26,15 +31,10 @@ export class SupportService {
         limit: number = 10,
         global?: string,
     ) {
-        const { isSuperAdmin, company } = user;
         const skip = from;
         const take = limit;
 
         let where: any = {};
-
-        if (!isSuperAdmin) {
-            where.company = company;
-        }
 
         if (global) {
             const searchFields = ['originalFilename', 'descripcion', 'responsable', 'company'];
@@ -67,6 +67,76 @@ export class SupportService {
             throw new BadRequestException('No file provided');
         }
 
+        // BR-16: Flujo de Corrección y Sustitución de Soporte Rechazado
+        if (createDto.replaceSupportId) {
+            const oldSupport = await this.supportRepository.findOne({
+                where: { id: createDto.replaceSupportId }
+            });
+
+            if (!oldSupport) {
+                throw new NotFoundException(`El soporte original con ID ${createDto.replaceSupportId} no existe.`);
+            }
+
+            // Eliminar archivo físico anterior
+            if (fs.existsSync(oldSupport.path)) {
+                try {
+                    fs.unlinkSync(oldSupport.path);
+                    console.log(`[FILE UNLINK] Archivo físico eliminado con éxito: ${oldSupport.path}`);
+                } catch (unlinkErr) {
+                    console.error(`Error al eliminar archivo físico anterior:`, unlinkErr);
+                }
+            }
+
+            // Actualizar soporte existente restableciendo los estados a pendiente
+            const updatedSupport = await this.supportRepository.preload({
+                id: oldSupport.id,
+                filename: file.filename,
+                originalFilename: file.originalname,
+                mimetype: file.mimetype,
+                size: file.size.toString(),
+                extension: path.extname(file.originalname).toLowerCase(),
+                path: file.path,
+                url: `/api/support/download/${file.filename}`,
+                revisado: false,
+                rechazado: false,
+                fechaRevision: null,
+                descripcion: createDto.descripcion || oldSupport.descripcion,
+                porcentajePeso: createDto.porcentajePeso ? Number(createDto.porcentajePeso) : oldSupport.porcentajePeso,
+                responsable: createDto.responsable || oldSupport.responsable,
+            });
+
+            if (!updatedSupport) {
+                throw new BadRequestException('Fallo al precargar el soporte de reemplazo');
+            }
+
+            const saved: Support = await this.supportRepository.save(updatedSupport);
+
+            // Alerta por correo al Supervisor (BR-16)
+            const contract = await this.dataSource.getRepository(Contract).findOne({
+                where: { id: saved.contratoId },
+                relations: ['contratista']
+            });
+
+            const supervisorEmail = 'supervisor@siisweb.com'; // Fallback de correo del supervisor
+            const contractorName = contract?.contratista ? `${contract.contratista.nom} ${contract.contratista.ape}` : 'Contratista';
+
+            await this.mailService.sendMailWithTemplate(
+                supervisorEmail,
+                'reject_alert',
+                {
+                    contratistaName: contractorName,
+                    numeroContrato: contract?.numeroContrato || 'N/A',
+                    filename: file.originalname,
+                }
+            ).catch(err => console.error('Error al notificar al supervisor por correo:', err));
+
+            return {
+                message: 'Support file replaced and corrected successfully',
+                data: saved,
+            };
+        }
+
+        // Flujo normal de subida
         const support = this.supportRepository.create({
             ...createDto,
             filename: file.filename,
@@ -76,6 +146,7 @@ export class SupportService {
             extension: path.extname(file.originalname).toLowerCase(),
             path: file.path,
             url: `/api/support/download/${file.filename}`,
+            porcentajePeso: createDto.porcentajePeso ? Number(createDto.porcentajePeso) : 0,
         });
 
         const saved = await this.supportRepository.save(support);
@@ -109,14 +180,40 @@ export class SupportService {
     }
 
     async update(id: string, updateDto: UpdateSupportDto) {
-        const support = await this.supportRepository.preload({
-            id,
-            ...updateDto,
-        });
+        const support = await this.supportRepository.findOne({ where: { id } });
         if (!support) {
             throw new NotFoundException(`Support with ID ${id} not found`);
         }
-        const updated = await this.supportRepository.save(support);
+
+        // BR-15: Notificación de rechazo inmediato al contratista por correo
+        if (updateDto.rechazado === true && !support.rechazado) {
+            const contractor = await this.dataSource.getRepository(Contratista).findOne({
+                where: { id: support.contratistaId }
+            });
+            if (contractor && contractor.email) {
+                await this.mailService.sendMailWithTemplate(
+                    contractor.email,
+                    'reject',
+                    {
+                        contratistaName: `${contractor.nom} ${contractor.ape}`,
+                        filename: support.originalFilename,
+                        observaciones: updateDto.descripcion || 'Sin observaciones añadidas.',
+                    }
+                ).catch(err => console.error('Error al enviar correo de rechazo:', err));
+            }
+        }
+
+        const preloaded = await this.supportRepository.preload({
+            id,
+            ...updateDto,
+            porcentajePeso: updateDto.porcentajePeso !== undefined ? Number(updateDto.porcentajePeso) : undefined,
+        });
+
+        if (!preloaded) {
+            throw new NotFoundException(`Support with ID ${id} not found`);
+        }
+
+        const updated = await this.supportRepository.save(preloaded);
         return {
             message: 'Support updated successfully',
             data: updated,

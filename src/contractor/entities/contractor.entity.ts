@@ -1,4 +1,4 @@
-import { OneToMany, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Entity } from 'typeorm';
+import { OneToMany, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Entity, Index } from 'typeorm';
 import { ContractorChecklist } from '../../contractor-checklist/entities/contractor-checklist.entity';
 import { Contract } from '../../contract/entities/contract.entity';
 import { Evaluation } from '../../evaluation/entities/evaluation.entity';
@@ -6,9 +6,10 @@ import { Period } from '../../period/entities/period.entity';
 import { Support } from '../../support/entities/support.entity';
 
 @Entity('contratistas')
+@Index(['company', 'tenantId'])
 export class Contratista {
-    @PrimaryGeneratedColumn()
-    id: number;
+    @PrimaryGeneratedColumn('uuid')
+    id: string;
 
     @CreateDateColumn({
         type: 'timestamptz',
@@ -52,6 +53,7 @@ export class Contratista {
     @Column({ type: 'varchar', length: 20, nullable: true, name: 'tipo_doc' })
     tipoDoc: string;
 
+    @Index('idx_contratistas_doc', { unique: true })
     @Column({
         type: 'varchar',
         length: 50,
@@ -82,6 +84,9 @@ export class Contratista {
 
     @Column({ type: 'varchar', length: 150, nullable: true })
     company: string;
+
+    @Column({ type: 'varchar', length: 150, nullable: true, name: 'tenant_id' })
+    tenantId: string;
 
     @OneToMany(() => ContractorChecklist, (checklist) => checklist.contratista)
     listasChequeo: ContractorChecklist[];

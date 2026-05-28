@@ -7,6 +7,7 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Contratista } from '../../contractor/entities/contractor.entity';
 import { Tarea } from '../../task/entities/task.entity';
@@ -16,6 +17,7 @@ import { Objective } from '../../objective/entities/objective.entity';
 import { Support } from '../../support/entities/support.entity';
 
 @Entity('contratos')
+@Index(['company', 'tenantId'])
 export class Contract {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -39,6 +41,7 @@ export class Contract {
   @Column({ type: 'varchar', length: 4, nullable: true })
   anio: string;
 
+  @Index('idx_contratos_numero', { unique: true })
   @Column({
     type: 'varchar',
     length: 100,
@@ -118,7 +121,7 @@ export class Contract {
   vigente: boolean;
 
   @Column({ type: 'boolean', default: false })
-  prorrogrado: boolean;
+  prorrogado: boolean;
 
   @Column({ type: 'boolean', default: false })
   detenido: boolean;
@@ -127,47 +130,53 @@ export class Contract {
   estado: string;
 
   @Column({
-    type: 'varchar',
-    length: 20,
+    type: 'numeric',
+    precision: 5,
+    scale: 2,
     nullable: true,
     name: 'porcentaje_total',
   })
-  porcentajeTotal: string;
+  porcentajeTotal: number;
 
   @Column({
-    type: 'varchar',
-    length: 20,
+    type: 'numeric',
+    precision: 5,
+    scale: 2,
     nullable: true,
     name: 'porcentaje_restante',
   })
-  porcentajeRestante: string;
+  porcentajeRestante: number;
 
   @Column({
-    type: 'varchar',
-    length: 50,
+    type: 'numeric',
+    precision: 15,
+    scale: 2,
     nullable: true,
     name: 'valor_total_contrato',
   })
-  valorTotalContrato: string;
+  valorTotalContrato: number;
 
   @Column({
-    type: 'varchar',
-    length: 50,
+    type: 'integer',
     nullable: true,
     name: 'numero_periodo',
   })
-  numeroPeriodo: string;
+  numeroPeriodo: number;
 
   @Column({
-    type: 'varchar',
-    length: 50,
+    type: 'numeric',
+    precision: 15,
+    scale: 2,
     nullable: true,
     name: 'valor_para_periodos',
   })
-  valorParaPeriodos: string;
+  valorParaPeriodos: number;
 
   @Column({ type: 'varchar', length: 150, nullable: true })
   company: string;
+
+  @Column({ type: 'varchar', length: 150, nullable: true, name: 'tenant_id' })
+  tenantId: string;
 
   @CreateDateColumn({ type: 'timestamptz', name: 'fecha_creacion' })
   fechaCreacion: Date;
@@ -183,8 +192,9 @@ export class Contract {
   @JoinColumn({ name: 'contratista_id' })
   contratista: Contratista;
 
-  @Column({ name: 'contratista_id' })
-  contratistaId: number;
+  @Index('idx_contratos_contratista')
+  @Column({ name: 'contratista_id', nullable: true })
+  contratistaId: string;
 
   @OneToMany(() => Tarea, (tarea) => tarea.contrato)
   tareas: Tarea[];

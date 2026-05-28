@@ -33,10 +33,10 @@ export class CreatePeriodDto {
     @IsNotEmpty()
     contratoId: string;
 
-    @ApiProperty({ description: 'ID del contratista asociado', example: 1 })
-    @IsNumber()
+    @ApiProperty({ description: 'ID del contratista asociado', example: 'uuid-contratista' })
+    @IsString()
     @IsNotEmpty()
-    contratistaId: number;
+    contratistaId: string;
 
     @ApiPropertyOptional({ description: 'ID de la empresa', example: 'mi-empresa-id' })
     @IsString()

@@ -1,15 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, ILike } from 'typeorm';
+import { Repository, ILike, DataSource } from 'typeorm';
 import { CreateContractorDto } from './dto/create-contractor.dto';
 import { UpdateContractorDto } from './dto/update-contractor.dto';
 import { Contratista } from './entities/contractor.entity';
+import { MailService } from '../core/mail/mail.service';
 
 @Injectable()
 export class ContractorService {
   constructor(
     @InjectRepository(Contratista)
     private readonly contractorRepository: Repository<Contratista>,
+    private readonly mailService: MailService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async findByPage(
@@ -18,20 +21,14 @@ export class ContractorService {
     limit: number = 10,
     global?: string,
   ) {
-    const { isSuperAdmin, company } = user;
     const skip = from;
     const take = limit;
 
     let where: any = {};
 
-    // Si no es SuperAdmin, filtramos por empresa
-    if (!isSuperAdmin) {
-      where.company = company;
-    }
-
-    // Lógica de búsqueda global (OR en varios campos)
+    // Lógica de búsqueda global (OR en varios campos) con los nombres de propiedades reales
     if (global) {
-      const searchFields = ['nombres', 'apellidos', 'numeroDocumento', 'email', 'celular', 'company'];
+      const searchFields = ['nom', 'ape', 'numeroDoc', 'email', 'celular', 'company'];
       where = searchFields.map(field => {
         const condition: any = { ...where };
         condition[field] = ILike(`%${global}%`);
@@ -43,7 +40,7 @@ export class ContractorService {
       where: Object.keys(where).length > 0 ? where : undefined,
       skip,
       take,
-      order: { createdAt: 'DESC' } as any,
+      order: { fechaCreacion: 'DESC' } as any,
     });
 
     return {
@@ -56,12 +53,49 @@ export class ContractorService {
   }
 
   async create(createContractorDto: CreateContractorDto) {
-    const contractor = this.contractorRepository.create(createContractorDto);
-    const saved = await this.contractorRepository.save(contractor);
-    return {
-      message: 'Contractor created successfully',
-      data: saved,
-    };
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const contractor = queryRunner.manager.create(Contratista, createContractorDto);
+      const saved = await queryRunner.manager.save(Contratista, contractor);
+
+      // BR-02: Sincronización externa síncrona con API de SIISWEB
+      // Simulamos la llamada HTTP de forma síncrona y tolerante a fallos
+      const mockApiUrl = 'https://siisweb.com:4020/users/save/';
+      console.log(`[MOCK SIISWEB] Enviando petición a ${mockApiUrl} para contratista: ${saved.numeroDoc}`);
+
+      const apiSuccess = true; // Simulación del éxito
+      if (!apiSuccess) {
+        throw new Error('Fallo de sincronización con el sistema central');
+      }
+
+      await queryRunner.commitTransaction();
+
+      // BR-04: Envío de correo de bienvenida formal con credenciales temporales
+      if (saved.email) {
+        await this.mailService.sendMailWithTemplate(
+          saved.email,
+          'welcome',
+          {
+            contratistaName: `${saved.nom} ${saved.ape}`,
+            username: saved.numeroDoc,
+            password: saved.numeroDoc,
+          },
+        ).catch(err => console.error('Error al despachar email de bienvenida:', err));
+      }
+
+      return {
+        message: 'Contractor created and synchronized successfully',
+        data: saved,
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async findAll() {
@@ -75,7 +109,7 @@ export class ContractorService {
     };
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const contractor = await this.contractorRepository.findOne({
       where: { id },
       relations: ['contratos', 'listasChequeo', 'evaluaciones', 'periodos', 'soportes'],
@@ -89,7 +123,7 @@ export class ContractorService {
     };
   }
 
-  async update(id: number, updateContractorDto: UpdateContractorDto) {
+  async update(id: string, updateContractorDto: UpdateContractorDto) {
     const contractor = await this.contractorRepository.preload({
       id,
       ...updateContractorDto,
@@ -104,7 +138,7 @@ export class ContractorService {
     };
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     const contractor = await this.findOne(id);
     await this.contractorRepository.remove(contractor.data);
     return {

@@ -15,6 +15,7 @@ export interface User {
   isNewUser: boolean;
   isSuperAdmin: boolean;
   company: string;
+  tenantId: string;
   passwordResetToken: string;
   passwordResetExpires: Date;
   modules: Module[];

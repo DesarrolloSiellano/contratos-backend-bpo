@@ -6,6 +6,7 @@ import {
     UpdateDateColumn,
     ManyToOne,
     JoinColumn,
+    Index,
 } from 'typeorm';
 import { Contract } from '../../contract/entities/contract.entity';
 import { Tarea } from '../../task/entities/task.entity';
@@ -14,6 +15,7 @@ import { Contratista } from '../../contractor/entities/contractor.entity';
 import { Objective } from '../../objective/entities/objective.entity';
 
 @Entity('soportes')
+@Index(['company', 'tenantId'])
 export class Support {
     @PrimaryGeneratedColumn('uuid')
     id: string;
@@ -44,8 +46,8 @@ export class Support {
     @Column({ type: 'text', nullable: true })
     descripcion: string;
 
-    @Column({ type: 'varchar', length: 20, nullable: true, name: 'porcentaje_peso' })
-    porcentajePeso: string;
+    @Column({ type: 'numeric', precision: 5, scale: 2, nullable: true, name: 'porcentaje_peso' })
+    porcentajePeso: number;
 
     @Column({ type: 'varchar', length: 200, nullable: true })
     responsable: string;
@@ -58,10 +60,13 @@ export class Support {
     rechazado: boolean;
 
     @Column({ type: 'date', nullable: true, name: 'fecha_revision' })
-    fechaRevision: string;
+    fechaRevision: Date | null;
 
     @Column({ type: 'varchar', length: 150, nullable: true })
     company: string;
+
+    @Column({ type: 'varchar', length: 150, nullable: true, name: 'tenant_id' })
+    tenantId: string;
 
     @CreateDateColumn({ type: 'timestamptz', name: 'fecha_creacion' })
     fechaCreacion: Date;
@@ -75,6 +80,7 @@ export class Support {
     @JoinColumn({ name: 'contrato_id' })
     contrato: Contract;
 
+    @Index('idx_soportes_contrato')
     @Column({ name: 'contrato_id', nullable: true })
     contratoId: string;
 
@@ -82,6 +88,7 @@ export class Support {
     @JoinColumn({ name: 'tarea_id' })
     tarea: Tarea;
 
+    @Index('idx_soportes_tarea')
     @Column({ name: 'tarea_id', nullable: true })
     tareaId: string;
 
@@ -89,6 +96,7 @@ export class Support {
     @JoinColumn({ name: 'periodo_id' })
     periodo: Period;
 
+    @Index('idx_soportes_periodo')
     @Column({ name: 'periodo_id', nullable: true })
     periodoId: string;
 
@@ -96,8 +104,8 @@ export class Support {
     @JoinColumn({ name: 'contratista_id' })
     contratista: Contratista;
 
-    @Column({ name: 'contratista_id' })
-    contratistaId: number;
+    @Column({ name: 'contratista_id', nullable: true })
+    contratistaId: string;
 
     @ManyToOne(() => Objective, (objective) => objective.soportes, { nullable: true, onDelete: 'SET NULL' })
     @JoinColumn({ name: 'objetivo_id' })

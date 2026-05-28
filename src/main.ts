@@ -9,8 +9,13 @@ import { ResponseInterceptor } from './core/interceptors/response.interceptor';
 import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 import { IdempotencyInterceptor } from './core/interceptors/idempotency.interceptor';
 import { IdempotencyService } from './core/idempotency/idempotency.service';
+import { patchTypeORMRepository } from './core/tenant/tenant.patch';
+import { TenantInterceptor } from './core/tenant/tenant.interceptor';
 
 async function bootstrap() {
+  // Aplicar parche global de TypeORM para filtrado multitenant automático
+  patchTypeORMRepository();
+
   // Asegurar que la base de datos existe antes de que TypeORM intente conectarse
   await ensureDatabaseExists();
 
@@ -56,6 +61,7 @@ async function bootstrap() {
 
   const idempotencyService = app.get(IdempotencyService);
   app.useGlobalInterceptors(
+    new TenantInterceptor(),
     new IdempotencyInterceptor(idempotencyService),
     new ResponseInterceptor(),
   );

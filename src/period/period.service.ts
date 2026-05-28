@@ -18,18 +18,13 @@ export class PeriodService {
         limit: number = 10,
         global?: string,
     ) {
-        const { isSuperAdmin, company } = user;
         const skip = from;
         const take = limit;
 
         let where: any = {};
 
-        if (!isSuperAdmin) {
-            where.company = company;
-        }
-
         if (global) {
-            const searchFields = ['numeroPeriodo', 'valor', 'company'];
+            const searchFields = ['numeroPeriodo', 'company'];
             where = searchFields.map(field => {
                 const condition: any = { ...where };
                 condition[field] = ILike(`%${global}%`);
@@ -55,7 +50,10 @@ export class PeriodService {
     }
 
     async create(createDto: CreatePeriodDto) {
-        const period = this.periodRepository.create(createDto);
+        const period = this.periodRepository.create({
+            ...createDto,
+            valor: createDto.valor ? Number(createDto.valor) : undefined,
+        });
         const saved = await this.periodRepository.save(period);
         return {
             message: 'Period created successfully',
@@ -105,6 +103,7 @@ export class PeriodService {
         const period = await this.periodRepository.preload({
             id,
             ...updateDto,
+            valor: updateDto.valor !== undefined ? Number(updateDto.valor) : undefined,
         });
         if (!period) {
             throw new NotFoundException(`Period with ID ${id} not found`);

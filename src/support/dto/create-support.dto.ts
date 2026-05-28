@@ -26,10 +26,15 @@ export class CreateSupportDto {
     @IsOptional()
     responsable?: string;
 
-    @ApiProperty({ description: 'ID del contratista (propietario)', example: 1 })
-    @IsNumber()
+    @ApiProperty({ description: 'ID del contratista (propietario)', example: 'uuid-contratista' })
+    @IsString()
     @IsNotEmpty()
-    contratistaId: number;
+    contratistaId: string;
+
+    @ApiPropertyOptional({ description: 'ID del soporte rechazado que se está reemplazando' })
+    @IsString()
+    @IsOptional()
+    replaceSupportId?: string;
 
     @ApiPropertyOptional({ description: 'ID del contrato asociado' })
     @IsString()
