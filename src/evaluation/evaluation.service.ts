@@ -5,14 +5,12 @@ import { Evaluation } from './entities/evaluation.entity';
 import { CreateEvaluationDto } from './dto/create-evaluation.dto';
 import { UpdateEvaluationDto } from './dto/update-evaluation.dto';
 import { Contratista } from '../contractor/entities/contractor.entity';
-import { MailService } from '../core/mail/mail.service';
 
 @Injectable()
 export class EvaluationService {
     constructor(
         @InjectRepository(Evaluation)
         private readonly evaluationRepository: Repository<Evaluation>,
-        private readonly mailService: MailService,
         private readonly dataSource: DataSource,
     ) {}
 
@@ -65,20 +63,6 @@ export class EvaluationService {
         const contractor = await this.dataSource.getRepository(Contratista).findOne({
             where: { id: saved.contratistaId }
         });
-
-        if (contractor && contractor.email) {
-            await this.mailService.sendMailWithTemplate(
-                contractor.email,
-                'evaluation',
-                {
-                    contratistaName: `${contractor.nom} ${contractor.ape}`,
-                    periodoNumero: saved.periodoNumero || 'N/A',
-                    porcentajeCalificado: (saved.porcentajeEvaluado || 0).toString(),
-                    observaciones: saved.observaciones || 'Sin observaciones adicionales.',
-                    valorPeriodo: (saved.valorPeriodo || 0).toString(),
-                }
-            ).catch(err => console.error('Error al despachar email de evaluación:', err));
-        }
 
         return {
             message: 'Evaluation created successfully',
@@ -140,21 +124,6 @@ export class EvaluationService {
         const contractor = await this.dataSource.getRepository(Contratista).findOne({
             where: { id: updated.contratistaId }
         });
-
-        if (contractor && contractor.email) {
-            await this.mailService.sendMailWithTemplate(
-                contractor.email,
-                'evaluation',
-                {
-                    contratistaName: `${contractor.nom} ${contractor.ape}`,
-                    periodoNumero: updated.periodoNumero || 'N/A',
-                    porcentajeCalificado: (updated.porcentajeEvaluado || 0).toString(),
-                    observaciones: updated.observaciones || 'Sin observaciones adicionales.',
-                    valorPeriodo: (updated.valorPeriodo || 0).toString(),
-                }
-            ).catch(err => console.error('Error al despachar email de evaluación:', err));
-        }
-
         return {
             message: 'Evaluation updated successfully',
             data: updated,

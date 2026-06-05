@@ -4,14 +4,12 @@ import { Repository, ILike, DataSource } from 'typeorm';
 import { CreateContractorDto } from './dto/create-contractor.dto';
 import { UpdateContractorDto } from './dto/update-contractor.dto';
 import { Contratista } from './entities/contractor.entity';
-import { MailService } from '../core/mail/mail.service';
 
 @Injectable()
 export class ContractorService {
   constructor(
     @InjectRepository(Contratista)
     private readonly contractorRepository: Repository<Contratista>,
-    private readonly mailService: MailService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -74,17 +72,6 @@ export class ContractorService {
       await queryRunner.commitTransaction();
 
       // BR-04: Envío de correo de bienvenida formal con credenciales temporales
-      if (saved.email) {
-        await this.mailService.sendMailWithTemplate(
-          saved.email,
-          'welcome',
-          {
-            contratistaName: `${saved.nom} ${saved.ape}`,
-            username: saved.numeroDoc,
-            password: saved.numeroDoc,
-          },
-        ).catch(err => console.error('Error al despachar email de bienvenida:', err));
-      }
 
       return {
         message: 'Contractor created and synchronized successfully',

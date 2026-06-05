@@ -6,7 +6,6 @@ import { CreateSupportDto } from './dto/create-support.dto';
 import { UpdateSupportDto } from './dto/update-support.dto';
 import { Contratista } from '../contractor/entities/contractor.entity';
 import { Contract } from '../contract/entities/contract.entity';
-import { MailService } from '../core/mail/mail.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -17,7 +16,6 @@ export class SupportService {
     constructor(
         @InjectRepository(Support)
         private readonly supportRepository: Repository<Support>,
-        private readonly mailService: MailService,
         private readonly dataSource: DataSource,
     ) {
         if (!fs.existsSync(this.uploadPath)) {
@@ -120,15 +118,6 @@ export class SupportService {
             const supervisorEmail = 'supervisor@siisweb.com'; // Fallback de correo del supervisor
             const contractorName = contract?.contratista ? `${contract.contratista.nom} ${contract.contratista.ape}` : 'Contratista';
 
-            await this.mailService.sendMailWithTemplate(
-                supervisorEmail,
-                'reject_alert',
-                {
-                    contratistaName: contractorName,
-                    numeroContrato: contract?.numeroContrato || 'N/A',
-                    filename: file.originalname,
-                }
-            ).catch(err => console.error('Error al notificar al supervisor por correo:', err));
 
             return {
                 message: 'Support file replaced and corrected successfully',
@@ -190,17 +179,7 @@ export class SupportService {
             const contractor = await this.dataSource.getRepository(Contratista).findOne({
                 where: { id: support.contratistaId }
             });
-            if (contractor && contractor.email) {
-                await this.mailService.sendMailWithTemplate(
-                    contractor.email,
-                    'reject',
-                    {
-                        contratistaName: `${contractor.nom} ${contractor.ape}`,
-                        filename: support.originalFilename,
-                        observaciones: updateDto.descripcion || 'Sin observaciones añadidas.',
-                    }
-                ).catch(err => console.error('Error al enviar correo de rechazo:', err));
-            }
+        
         }
 
         const preloaded = await this.supportRepository.preload({

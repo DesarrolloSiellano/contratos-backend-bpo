@@ -34,7 +34,7 @@
     "class-validator": "^0.15.1",
     "mongoose": "^9.6.1",
     "nestjs-pino": "^4.6.1",
-    "nodemailer": "^8.0.9",
+    "nodemailer": "^8.0.10",
     "passport-jwt": "^4.0.1",
     "pg": "^8.20.0",
     "pino-http": "^11.0.0",
